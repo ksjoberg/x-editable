@@ -12,7 +12,7 @@ $(function () {
           '<a href="#" data-type="text" id="username">user</a>' + 
           '<a href="#" data-type="textarea" id="comment">12345</a>' + 
           '<a href="#" data-type="select" id="sex" data-value="1" data-source=\'{"1":"q", "2":"w"}\'>q</a>' + 
-          '<a href="#" data-type="date" id="dob" data-format="dd.mm.yyyy">15.05.1984</a>'
+          '<a href="#" data-type="date" id="dob" data-format="DD.MM.YYYY">15.05.1984</a>'
          ).appendTo('#qunit-fixture').editable(),
          e1 = $('#username').editable('option', 'validate', function(value) {
                      if($.trim(value) !== 'user1') return 'username is required';
@@ -112,7 +112,7 @@ $(function () {
         e.on('hidden', function(event, reason) {
             //distinguish from native bootstrap popover event
             if(arguments.length != 2) return;
-            ok((reason === test_reason) || (test_reason === 'manual' && reason === undefined), 'hidden triggered, reason ok'); 
+            ok((reason === test_reason) || (test_reason === 'manual' && reason === undefined), 'hidden triggered, reason ok '+reason); 
         });            
         
         e.editable({

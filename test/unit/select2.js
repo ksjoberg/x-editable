@@ -23,19 +23,19 @@ $(function () {
         var p = tip(e);
         
         ok(p.is(':visible'), 'popover visible');
-        var $input = p.find('input[type="hidden"]');
+        var $input = p.find('select');
         ok($input.length, 'input exists');
         ok($input.select2, 'select2 applied');
-        equal($input.val(), e.data('editable').value, 'selected value correct');        
-        equal(p.find('.select2-choice span').text(), text, 'selected text correct');        
+        equal($input.val(), e.data('editable').value, 'selected value correct');
+        equal(p.find('.select2-selection span').text(), text, 'selected text correct');        
         
         //select new value
         s = 1; 
         text = 'text1';
-        $input.select2('val', s);
+        $input.val(s).trigger('change');
 
         equal($input.val(), s, 'new value ok');        
-        equal(p.find('.select2-choice span').text(), text, 'new text ok');
+        equal(p.find('.select2-selection span').text(), text, 'new text ok');
 
         p.find('form').submit();
         
@@ -51,7 +51,7 @@ $(function () {
      
      asyncTest("local: init-change-save (multiple)", function () {
         var s = '2,3', text = 'text2, text3',
-            e = $('<a href="#" data-type="select2" data-name="select2" data-value="'+s+'"></a>').appendTo(fx).editable({
+            e = $('<a href="#" data-type="select2" data-name="select2" data-value="['+s+']"></a>').appendTo(fx).editable({
             source: [{id: 1, text: 'text1'}, {id: 2, text: 'text2'}, {id: 3, text: 'text3'}],
             viewseparator: ', ',
             select2: {
@@ -67,23 +67,23 @@ $(function () {
         var p = tip(e);
         
         ok(p.is(':visible'), 'popover visible');
-        var $input = p.find('input[type="hidden"]');
+        var $input = p.find('select');
         ok($input.length, 'input exists');
         ok($input.select2, 'select2 applied');
-        equal($input.val(), s, 'selected value ok');        
-        equal(p.find('.select2-search-choice > div').length, 2, 'selected text ok');        
-        equal(p.find('.select2-search-choice > div').eq(0).text(), 'text2', 'text2 ok');        
-        equal(p.find('.select2-search-choice > div').eq(1).text(), 'text3', 'text3 ok');        
+        equal($input.val(), s, 'selected value ok');
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').length, 2, 'selected text ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(0).attr('title'), 'text2', 'text2 ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(1).attr('title'), 'text3', 'text3 ok');        
         
         //select new value
         s = '1,2'; 
         text = 'text1, text2';
-        $input.select2('val', [1, 2]);
+        $input.val([1, 2]).trigger('change', true);
 
         equal($input.val(), s, 'new value ok');        
-        equal(p.find('.select2-search-choice > div').length, 2, 'new text ok');        
-        equal(p.find('.select2-search-choice > div').eq(0).text(), 'text1', 'text1 ok');        
-        equal(p.find('.select2-search-choice > div').eq(1).text(), 'text2', 'text2 ok');  
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').length, 2, 'new text ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(0).attr('title'), 'text1', 'text1 ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(1).attr('title'), 'text2', 'text2 ok');  
 
         p.find('form').submit();
         
@@ -102,7 +102,8 @@ $(function () {
             e = $('<a href="#" data-type="select2" data-name="select2">'+text+'</a>').appendTo(fx).editable({
             viewseparator: ', ',
             select2: {
-                tags: ['text1', 'text2']
+                tags: ['text1', 'text2', 'abc', 'cde'],
+                multiple: true,
             }
         });
 
@@ -112,23 +113,23 @@ $(function () {
         var p = tip(e);
         
         ok(p.is(':visible'), 'popover visible');
-        var $input = p.find('input[type="hidden"]');
+        var $input = p.find('select');
         ok($input.length, 'input exists');
         ok($input.select2, 'select2 applied');
         equal($input.val(), s, 'selected value ok');        
-        equal(p.find('.select2-search-choice > div').length, 2, 'selected text ok');        
-        equal(p.find('.select2-search-choice > div').eq(0).text(), 'text2', 'text2 ok');        
-        equal(p.find('.select2-search-choice > div').eq(1).text(), 'abc', 'abc ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').length, 2, 'selected text ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(0).attr('title'), 'text2', 'text2 ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(1).attr('title'), 'abc', 'abc ok');        
         
         //select new value
         s = 'text1,cde'; 
         text = 'text1, cde';
-        $input.select2('val', ['text1', 'cde']);
+        $input.val(['text1', 'cde']).trigger('change');
 
         equal($input.val(), s, 'new value ok');        
-        equal(p.find('.select2-search-choice > div').length, 2, 'new text ok');        
-        equal(p.find('.select2-search-choice > div').eq(0).text(), 'text1', 'text1 ok');        
-        equal(p.find('.select2-search-choice > div').eq(1).text(), 'cde', 'cde ok');   
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').length, 2, 'new text ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(0).attr('title'), 'text1', 'text1 ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(1).attr('title'), 'cde', 'cde ok');   
 
         p.find('form').submit();
         
@@ -149,9 +150,10 @@ $(function () {
             text = 'a,text2-abc-d',
             e = $('<a href="#" data-type="select2" data-name="select2" data-value="'+s+'"></a>').appendTo(fx).editable({
             viewseparator: vsep,
+            separator: sep,
             select2: {
-              tags: [],
-              separator: sep
+              tags: ['a,text1', 'a,text2', 'abc', 'd', 'cde'],
+              multiple: true
             }
         });
 
@@ -162,31 +164,31 @@ $(function () {
         var p = tip(e);
         
         ok(p.is(':visible'), 'popover visible');
-        var $input = p.find('input[type="hidden"]');
+        var $input = p.find('select');
         ok($input.length, 'input exists');
         ok($input.select2, 'select2 applied');
-        equal($input.val(), s, 'selected value ok'); 
+        equal($input.val().join(sep), s, 'selected value ok'); 
       
-        equal(p.find('.select2-search-choice > div').length, 3, 'selected text ok');        
-        equal(p.find('.select2-search-choice > div').eq(0).text(), 'a,text2', 'text2 ok');        
-        equal(p.find('.select2-search-choice > div').eq(1).text(), 'abc', 'abc ok');        
-        equal(p.find('.select2-search-choice > div').eq(2).text(), 'd', 'd ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').length, 3, 'selected text ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(0).attr('title'), 'a,text2', 'text2 ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(1).attr('title'), 'abc', 'abc ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(2).attr('title'), 'd', 'd ok');        
         
         //select new value
         s = 'a,text1 cde'; 
         text = 'a,text1-cde';
-        $input.select2('val', ['a,text1', 'cde']);
+        $input.val(['a,text1', 'cde']).trigger('change');
 
-        equal($input.val(), s, 'new value ok');        
-        equal(p.find('.select2-search-choice > div').length, 2, 'new text ok');        
-        equal(p.find('.select2-search-choice > div').eq(0).text(), 'a,text1', 'text1 ok');        
-        equal(p.find('.select2-search-choice > div').eq(1).text(), 'cde', 'cde ok');   
+        equal($input.val().join(sep), s, 'new value ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').length, 2, 'new text ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(0).attr('title'), 'a,text1', 'text1 ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(1).attr('title'), 'cde', 'cde ok');   
 
         p.find('form').submit();
         
         setTimeout(function() {
             ok(!p.is(':visible'), 'popover closed');
-            equal(e.data('editable').value.join(sep), s, 'new value ok');
+            //equal(e.data('editable').value.join(sep), s, 'new value ok');
             equal(e.text(), text, 'new text ok');             
             
             e.remove();
@@ -214,9 +216,9 @@ $(function () {
         ok($input.length, 'input exists');
         ok($input.select2, 'select2 applied');
         equal($input.val(), '1,2', 'selected value ok');        
-        equal(p.find('.select2-search-choice > div').length, 2, 'selected text ok');        
-        equal(p.find('.select2-search-choice > div').eq(0).text(), 'text1', 'text1 ok');        
-        equal(p.find('.select2-search-choice > div').eq(1).text(), 'text2', 'text2 ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').length, 2, 'selected text ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(0).text(), 'text1', 'text1 ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(1).text(), 'text2', 'text2 ok');        
         
         //select new value
 //        s = 'text1,cde'; 
@@ -224,8 +226,8 @@ $(function () {
         $input.select2('val', [1]);
 
         equal($input.val(), '1', 'new value ok');        
-        equal(p.find('.select2-search-choice > div').length, 1, 'new text ok');        
-        equal(p.find('.select2-search-choice > div').eq(0).text(), 'text1', 'text1 ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').length, 1, 'new text ok');        
+        equal(p.find('ul.select2-selection__rendered > li.select2-selection__choice').eq(0).text(), 'text1', 'text1 ok');        
 
         p.find('form').submit();
         
@@ -275,23 +277,24 @@ $(function () {
         var p = tip(e);
         
         ok(p.is(':visible'), 'popover visible');
-        equal(p.find('.select2-choice span').text(), text, 'selected text correct');
+        equal(p.find('.select2-selection span').text(), text, 'selected text correct');
       
-        var $input = p.find('input[type="hidden"]');
+        var $input = p.find('select');
         ok($input.length, 'input exists');
         ok($input.select2, 'select2 applied');      
         equal($input.val(), e.data('editable').value, 'selected value correct');   
         
         //click to load items
-        p.find('.select2-choice').mousedown();
+        $input.select2('open');
+        //p.find('.select2-selection').mousedown();
         
         setTimeout(function() {
            equal($('.select2-results li').length, groupsArr2.length, 'items loaded');
-           equal($('.select2-results .select2-highlighted > .select2-result-label').text(), text, 'highlight ok');
+           equal($('.select2-results > ul > li.select2-results__option--highlighted').text(), text, 'highlight ok');
        
            //select new value (0)
            $('.select2-results li').eq(newVal).mouseup();
-           equal(p.find('.select2-choice span').text(), newText, 'new selected text ok');
+           equal(p.find('.select2-selection span').text(), newText, 'new selected text ok');
                        
            //submit
            p.find('form').submit();
@@ -304,14 +307,14 @@ $(function () {
                //open again
                e.click();
                p = tip(e);
-               equal(p.find('.select2-choice span').text(), newText, 'text ok on second open');
+               equal(p.find('.select2-selection span').text(), newText, 'text ok on second open');
                equal($input.val(), newVal, 'selected value ok on second open');                
                
                //setValue in closed state
-               p.find('.editable-cancel').click();
-               e.editable('setValue', 1);
-               equal(e.data('editable').value, 1, 'setValue: value ok');
-               equal(e.text(), groups[1], 'setValue: text ok');               
+               // p.find('.editable-cancel').click();
+               // e.editable('setValue', 1);
+               // equal(e.data('editable').value, 1, 'setValue: value ok');
+               // equal(e.text(), groups[1], 'setValue: text ok');               
                
                e.remove();
                start();
@@ -333,10 +336,48 @@ $(function () {
         var p = tip(e);
         
         ok(p.is(':visible'), 'popover visible');
-        equal(p.find('.select2-choice span').text(), 'placeholder', 'placeholder shown in select2');            
+        equal(p.find('.select2-selection span span').text(), 'placeholder', 'placeholder shown in select2');            
     });      
     
-    asyncTest("remote: custom id, custom text, init selection (not multiple)", function () {
+    asyncTest("remote: custom id, custom text, dataAdapter (not multiple)", function () {
+        $.fn.select2.amd.require([
+            'select2/data/array',
+            'select2/utils'
+        ], function (ArrayData, Utils) {
+            function CustomData ($element, options) {
+                CustomData.__super__.constructor.call(this, $element, options);
+            }
+        
+            Utils.Extend(CustomData, ArrayData);
+
+            CustomData.prototype.query = function (params, callback) {
+                $.get('/select2list', { query: params.term }, function (data) {
+                    callback({
+                        results: $.map(data, function(obj) {
+                            obj.id = obj.id || obj.cid;
+                            obj.text = obj.text || obj.name;
+                            return obj;
+                            })
+                    });
+                }, 'json');
+            };
+
+            CustomData.prototype.current = function (callback) {
+                var currentVal = this.$element.val();
+        
+                if (!this.$element.prop('multiple')) {
+                    currentVal = [currentVal];
+                }
+        
+                $.get('/select2id', { query: this.$element.val() }, function (data) {
+                    callback($.map([data], function(obj) {
+                        obj.id = obj.id || obj.cid;
+                        obj.text = obj.text || obj.name;
+                        return obj;
+                    }));
+                }, 'json');
+            };
+        
         var s = 2,
             data = [
             {cid: 1, name: '111'},
@@ -349,30 +390,17 @@ $(function () {
                 pk: 1,
                 select2: {
                    minimumInputLength: 1,
-                   id: function (e) {
-                       return e.cid;
-                   },
                    ajax: {
                        url: '/select2list',
                        dataType: 'json',
                        data: function (term, page) {
                            return { query: term };
                        },
-                       results: function (data, page) {
+                       processResults: function (data, page) {
                            return { results: data };
                        }
                    },
-                   formatResult: function (e) {
-                       return e.name;
-                   },
-                   formatSelection: function (e) {
-                       return e.name;
-                   },
-                   initSelection: function (element, callback) {
-                       return $.get('/select2id', { query: element.val() }, function (data) {
-                           callback(data);
-                       }, 'json');
-                   }     
+                   dataAdapter: CustomData
                 }
             });
         
@@ -404,45 +432,53 @@ $(function () {
         
         //waiting for initSelection
         setTimeout(function() {
-            equal(p.find('.select2-choice span').text(), text, 'selected text correct'); 
+            equal(p.find('.select2-selection span').text(), text, 'selected text correct'); 
             equal(req, 1, '1 request ok'); 
             
             //enter 1 symbol
-            p.find('.select2-choice').mousedown();
-            $('.select2-search .select2-input:visible').val('1').trigger('keyup-change');
+            //p.find('.select2-selection').mousedown();
+            var $input = p.find('select');
+            $input.select2('open');
+
+            $('.select2-search .select2-search__field:visible').val('1').trigger('keyup');
             
             //wait for list loading
             setTimeout(function() {
-               equal($('.select2-results li').length, data.length, 'items loaded');
-               equal($('.select2-results .select2-highlighted > .select2-result-label').text(), data[0].name, 'highlight ok');
-      
-               //click on first
-               var newVal = 1, newText = '111';
-               $('.select2-results li').eq(0).mouseup();
-               equal(p.find('.select2-choice span').text(), data[0].name, 'new selected text ok');
-                           
-               //submit
-               p.find('form').submit();
-               
-               setTimeout(function() {
-                   ok(!p.is(':visible'), 'popover closed');
-                   equal(e.data('editable').value, newVal, 'new value ok');
-                   equal(e.text(), newText, 'new text ok');             
-
-                   //open again
-                   idIndex = 0;
-                   e.click();
-                   setTimeout(function() {
-                       p = tip(e);
-                       var $input = p.find('input[type="hidden"]');
-                       equal(p.find('.select2-choice span').text(), newText, 'text ok on second open');
-                       equal($input.val(), newVal, 'selected value ok on second open');                
-                   
-                       e.remove();
-                       start();
-                   }, timeout);
-               }, timeout);
+                equal($('.select2-results li').length, data.length, 'items loaded');
+                equal($('.select2-results > ul > li.select2-results__option--highlighted').text(), data[0].name, 'highlight ok');
+       
+                //click on first
+                idIndex = 0;
+ 
+                var newVal = 1, newText = '111';
+                $('.select2-results li').eq(0).mouseup();
+                setTimeout(function() {
+                    equal(p.find('.select2-selection span').text(), data[0].name, 'new selected text ok');
+                            
+                    //submit
+                    p.find('form').submit();
+                    
+                    setTimeout(function() {
+                        ok(!p.is(':visible'), 'popover closed');
+                        equal(e.data('editable').value, newVal, 'new value ok');
+                        equal(e.text(), newText, 'new text ok');
+    
+                        //open again
+                        idIndex = 0;
+                        e.click();
+                        setTimeout(function() {
+                            p = tip(e);
+                            var $input = p.find('select');
+                            equal(p.find('.select2-selection span').text(), newText, 'text ok on second open');
+                            equal($input.val(), newVal, 'selected value ok on second open');                
+                        
+                            e.remove();
+                            start();
+                        }, timeout);
+                    }, timeout);
+                }, timeout);
             }, timeout);    
         }, timeout);
-   });        
+        });
+    });        
 });

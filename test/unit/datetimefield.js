@@ -1,11 +1,10 @@
-$(function () {         
+define(["jquery", "moment"], function ($, moment) {
    
-   var dpg, f = 'dd.mm.yyyy hh:ii', mode;
+   var f = 'DD.MM.YYYY HH:mm', mode;
    
    module("datetimefield", {
         setup: function(){
             fx = $('#async-fixture');
-            dpg = $.fn.datetimepicker.DPGlobal;
             $.support.transition = false;
             mode = $.fn.editable.defaults.mode;
             $.fn.editable.defaults.mode = 'inline';
@@ -18,13 +17,11 @@ $(function () {
     
     function frmt(date, format) {
         //convert to utc
-        date = $.fn.editabletypes.datetime.prototype.toUTC(date); 
-        return dpg.formatDate(date, dpg.parseFormat(format, 'standard'), 'en', 'standard');  
+        //date = moment($.fn.editabletypes.datetime.prototype.toUTC(date)); 
+        return date.format(format);
     }
      
     asyncTest("container should contain datetimepicker with value and save new entered date", function () {
-        $.fn.editabletypes.datetimefield.defaults.datetimepicker.weekStart = 1;
-        
         var d = '15.05.1984 20:30',
             e = $('<a href="#" data-type="datetime" data-pk="1" data-url="post-datetimefield">'+d+'</a>').appendTo(fx).editable({
                 format: f,
@@ -44,7 +41,7 @@ $(function () {
         //testing func, run twice!
         var func = function() {
             var df = $.Deferred();
-            equal(frmt(e.data('editable').value, 'dd.mm.yyyy hh:ii'), d, 'value correct');
+            equal(frmt(e.data('editable').value, 'DD.MM.YYYY HH:mm'), d, 'value correct');
                 
             e.click();
             var cont = tip(e);
@@ -53,13 +50,13 @@ $(function () {
             equal(cont.find('input').val(), d, 'value set correct');
                
             //open picker
-            cont.find('span.add-on').click();
-            var p = cont.find('span.add-on').parent().data().datetimepicker.picker;
+            cont.find('span.input-group-addon').click();
+            var p = cont.find('.bootstrap-datetimepicker-widget');
             
             //check date in picker
             ok(p.is(':visible'), 'datetimepicker exists');
             equal(p.length, 1, 'datetimepicker single');
-            ok(p.find('.datetimepicker-days').is(':visible'), 'datetimepicker days visible');        
+            ok(p.find('.datepicker-days').is(':visible'), 'datetimepicker days visible');        
             
             equal(frmt(e.data('editable').value, f), d, 'day set correct');
             ok(p.find('td.day.active').is(':visible'), 'active day is visible');
@@ -68,17 +65,26 @@ $(function () {
 
             //set new day
             p.find('.day.active').next().click();
-            
+
+            //switch to timepicker
+            p.find('.picker-switch a').click();
+
             //hours appeared?
-            ok(p.find('.datetimepicker-hours').is(':visible'), 'datetimepicker hours visible');
+            ok(p.find('.timepicker-hour').is(':visible'), 'datetimepicker hours visible');
+
             //set hours 21
-            p.find('.hour.active').next().click();
+            p.find('.timepicker a.btn[data-action="incrementHours"]').click();
 
             //minutes appeared?
-            ok(p.find('.datetimepicker-minutes').is(':visible'), 'datetimepicker minutes visible');
-            //set minutes 21:35
-            p.find('.minute.active').next().click();
+            ok(p.find('.timepicker-minute').is(':visible'), 'datetimepicker minutes visible');
 
+            p.find('.timepicker span[data-action="showMinutes"]').click();
+            //set minutes 21:35
+            p.find('.timepicker-minutes td.minute')[7].click();
+
+            // Emulate clicking outside the calendar, closing it
+            p.hide();
+            
             //submit
             cont.find('form').submit();
         
@@ -106,29 +112,29 @@ $(function () {
         var dview = '15/05/1984 11:50',
             d = '1984-05-15 11:50',
             e = $('<a href="#" data-type="datetime" data-pk="1">'+dview+'</a>').appendTo('#qunit-fixture').editable({
-                format: 'yyyy-mm-dd hh:ii',
-                viewformat: 'dd/mm/yyyy hh:ii',
+                format: 'YYYY-MM-DD HH:mm',
+                viewformat: 'DD/MM/YYYY HH:mm',
                 datetimepicker: {
                     
                 }
             });
         
-          equal(frmt(e.data('editable').value, 'yyyy-mm-dd hh:ii'), d, 'value correct');
+          equal(frmt(e.data('editable').value, 'YYYY-MM-DD HH:mm'), d, 'value correct');
      });       
   
      test("viewformat, init by value", function () {
         var dview = '15/05/1984 15:45',
             d = '1984-05-15 15:45',
-            e = $('<a href="#" data-type="datetime" data-pk="1" data-format="yyyy-mm-dd hh:ii" data-viewformat="dd/mm/yyyy hh:ii"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
+            e = $('<a href="#" data-type="datetime" data-pk="1" data-format="YYYY-MM-DD HH:mm" data-viewformat="DD/MM/YYYY HH:mm"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
         
-        equal(frmt(e.data('editable').value, 'yyyy-mm-dd hh:ii'), d, 'value correct');
+        equal(frmt(e.data('editable').value, 'YYYY-MM-DD HH:mm'), d, 'value correct');
         equal(e.text(), dview, 'text correct');
      });    
    
  	test("incorrect datetime", function () {
         var dview = '15/05/1984 15:45',
             d = '1984-05-15 15:45',
-            e = $('<a href="#" data-type="datetime" data-pk="1" data-format="yyyy-mm-dd hh:ii" data-viewformat="dd/mm/yyyy hh:ii"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
+            e = $('<a href="#" data-type="datetime" data-pk="1" data-format="YYYY-MM-DD HH:mm" data-viewformat="DD/MM/YYYY HH:mm"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
         
         e.click();
         var p = tip(e);

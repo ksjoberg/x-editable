@@ -15,13 +15,21 @@
   <script src="libs/bootstrap400/js/bootstrap.bundle.min.js"></script>
 
 
-  <link rel="stylesheet" href="../src/inputs/select2/lib/select2.css"/>
+  <link rel="stylesheet" href="../src/inputs/select2/lib/css/select2.css"/>
   <link rel="stylesheet" href="../src/inputs/select2/lib/select2-bootstrap.css"/>
-  <script src="../src/inputs/select2/lib/select2.js"></script>
+  <script src="../src/inputs/select2/lib/js/select2.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js"></script>
-
-  <link rel="stylesheet" href="../src/inputs/datetime/bootstrap-datetimepicker/css/datetimepicker.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.js"></script>
+  <script>
+    // ISO-8601, Europe
+    moment.updateLocale('en', {
+      week : {
+          dow : 1, // First day of week is Monday
+          doy : 4  // First week of year must contain 4 January (7 + 1 - 4)
+        }
+    });
+    </script>
+  <link rel="stylesheet" href="../src/inputs/datetime/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css"/>
   <script src="../src/inputs/datetime/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js"></script>
 
   <link rel="stylesheet" href="../dist/inputs-ext/typeaheadjs/lib/typeahead.js-bootstrap.css"/>

@@ -1,7 +1,7 @@
-/*! X-editable - v1.5.3 
+/*! x-editable - v1.5.3 
 * In-place editing with Twitter Bootstrap, jQuery UI or pure jQuery
 * http://github.com/vitalets/x-editable
-* Copyright (c) 2019 Vitaliy Potapov; Licensed MIT */
+* Copyright (c) 2023 Vitaliy Potapov; Licensed MIT */
 .editableform {
     margin-bottom: 0; /* overwrites bootstrap margin */
 }
@@ -23,12 +23,12 @@
 
 
 /* 
-  BS3 width:1005 for inputs breaks editable form in popup 
+  BS3 width:100% for inputs breaks editable form in popup 
   See: https://github.com/vitalets/x-editable/issues/393
 */
-.editableform .form-control {
+/*.editableform .form-control {
     width: auto;
-}
+}*/
 
 .editable-buttons {
    display: inline-block; /* should be inline to take effect of parent's white-space: nowrap */

@@ -24,8 +24,7 @@ Automatically shown in inline mode.
             this.setClass();
             this.setAttr('placeholder');
 
-            //bootstrap-datepicker is set `bdateicker` to exclude conflict with jQuery UI one. (in date.js)
-            this.$input.bdatepicker(this.options.datepicker);
+            this.$tpl.datetimepicker(this.options.datepicker);
 
             //need to disable original event handlers
             this.$input.off('focus keydown');
@@ -33,14 +32,17 @@ Automatically shown in inline mode.
             //update value of datepicker
             this.$input.keyup($.proxy(function(){
                this.$tpl.removeData('date');
-               this.$tpl.bdatepicker('update');
+               this.$tpl.data('DateTimePicker').date(this.$input.val());
             }, this));
 
         },
 
        value2input: function(value) {
-           this.$input.val(value ? this.dpg.formatDate(value, this.parsedViewFormat, this.options.datepicker.language) : '');
-           this.$tpl.bdatepicker('update');
+           this.$input.val(this.value2html(value));
+           //this.$tpl.datetimepicker('update');
+           if(value) {
+               this.$tpl.data('DateTimePicker').date(value);
+           }
        },
 
        input2value: function() {
@@ -48,7 +50,8 @@ Automatically shown in inline mode.
        },
 
        activate: function() {
-           $.fn.editabletypes.text.prototype.activate.call(this);
+            //this.$input.data('DateTimePicker').show();
+            $.fn.editabletypes.text.prototype.activate.call(this);
        },
 
        autosubmit: function() {
@@ -60,19 +63,16 @@ Automatically shown in inline mode.
         /**
         @property tpl
         **/
-        tpl:'<div class="input-append date"><input type="text"/><span class="add-on"><i class="icon-th"></i></span></div>',
+        tpl:'<div class="input-group date" style="position: relative"><input type="text"/><span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span></div>',
         /**
         @property inputclass
-        @default 'input-small'
+        @default null
         **/
-        inputclass: 'input-small',
+        inputclass: null,
 
         /* datepicker config */
         datepicker: {
-            weekStart: 0,
-            startView: 0,
-            minViewMode: 0,
-            autoclose: true
+            format: 'L',
         }
     });
 

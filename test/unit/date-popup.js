@@ -1,11 +1,18 @@
-(function () {
+(function(factory) {
+    if (typeof define === 'function' && define.amd) {
+      // AMD environment
+      define(['jquery', 'moment'], factory);
+    } else {
+      // Global jQuery fallback
+      factory(jQuery, moment);
+    }
+  })(function ($, moment) {
    
-   var dpg, f = 'dd.mm.yyyy', mode;
+   var f = 'DD.MM.YYYY', mode;
    
    module("date-popup", {
         setup: function(){
             fx = $('#async-fixture');
-            dpg = $.fn.bdatepicker.DPGlobal;
             $.support.transition = false;
             mode = $.fn.editable.defaults.mode;
             $.fn.editable.defaults.mode = 'popup';
@@ -17,12 +24,12 @@
     });
     
     function frmt(date, format) {
-       return dpg.formatDate(date, dpg.parseFormat(format), 'en');  
+        //convert to utc
+        date = moment($.fn.editabletypes.datetime.prototype.toUTC(date)); 
+        return date.format(format);  
     }
      
     asyncTest("container should contain datepicker with value and save new entered date", function () {
-        $.fn.editabletypes.date.defaults.datepicker.weekStart = 1;
-        
         var d = '15.05.1984',
             e = $('<a href="#" data-type="date" data-pk="1" data-url="post-date.php">'+d+'</a>').appendTo(fx).editable({
                 format: f,
@@ -42,7 +49,7 @@
         //testing func, run twice!
         var func = function() {
             var df = $.Deferred();
-            equal(frmt(e.data('editable').value, 'dd.mm.yyyy'), d, 'value correct');
+            equal(frmt(e.data('editable').value, 'DD.MM.YYYY'), d, 'value correct');
                 
             e.click();
             var p = tip(e);
@@ -80,14 +87,11 @@
      });  
      
      asyncTest("viewformat, init by text", function () {
-         
-        $.fn.editabletypes.date.defaults.datepicker.weekStart = 1;
-         
         var dview = '15/05/1984',
             d = '1984-05-15',
             e = $('<a href="#" data-type="date" data-pk="1" data-url="post-date1.php">'+dview+'</a>').appendTo(fx).editable({
-                format: 'yyyy-mm-dd',
-                viewformat: 'dd/mm/yyyy',
+                format: 'YYYY-MM-DD',
+                viewformat: 'DD/MM/YYYY',
                 datepicker: {
                     
                 }
@@ -95,7 +99,7 @@
             nextD = '1984-05-16',
             nextDview = '16/05/1984';
         
-          equal(frmt(e.data('editable').value, 'yyyy-mm-dd'), d, 'value correct');
+          equal(frmt(e.data('editable').value, 'YYYY-MM-DD'), d, 'value correct');
                         
           $.mockjax({
               url: 'post-date1.php',
@@ -108,7 +112,7 @@
         var p = tip(e);
         ok(p.find('.datepicker').is(':visible'), 'datepicker exists');
         
-        equal(frmt(e.data('editable').value, 'yyyy-mm-dd'), d, 'day set correct');
+        equal(frmt(e.data('editable').value, 'YYYY-MM-DD'), d, 'day set correct');
         equal(p.find('td.day.active').text(), 15, 'day shown correct');
         equal(p.find('th.dow').eq(0).text(), 'Mo', 'weekStart correct');
 
@@ -118,7 +122,7 @@
     
         setTimeout(function() {          
            ok(!p.is(':visible'), 'popover closed')
-           equal(frmt(e.data('editable').value, 'yyyy-mm-dd'), nextD, 'new date saved to value')
+           equal(frmt(e.data('editable').value, 'YYYY-MM-DD'), nextD, 'new date saved to value')
            equal(e.text(), nextDview, 'new text shown in correct format')            
            e.remove();    
            start();  
@@ -129,17 +133,17 @@
      test("viewformat, init by value", function () {
         var dview = '15/05/1984',
             d = '1984-05-15',
-            e = $('<a href="#" data-type="date" data-pk="1" data-format="yyyy-mm-dd" data-viewformat="dd/mm/yyyy"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
+            e = $('<a href="#" data-type="date" data-pk="1" data-format="YYYY-MM-DD" data-viewformat="DD/MM/YYYY"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
         
-        equal(frmt(e.data('editable').value, 'yyyy-mm-dd'), d, 'value correct');
+        equal(frmt(e.data('editable').value, 'YYYY-MM-DD'), d, 'value correct');
         equal(e.text(), dview, 'text correct');
      });
      
     test("datepicker options can be defined in data-datepicker string", function () {
-        var  e = $('<a href="#" data-type="date" data-datepicker="{weekStart: 2}" data-pk="1" data-url="/post"></a>').appendTo('#qunit-fixture').editable({
+        var  e = $('<a href="#" data-type="date" data-datepicker="{stepping: 5}" data-pk="1" data-url="/post"></a>').appendTo('#qunit-fixture').editable({
             });
        
-        equal(e.data('editable').input.options.datepicker.weekStart, 2, 'options applied correct');
+        equal(e.data('editable').input.options.datepicker.stepping, 5, 'options applied correct');
     });    
      
      
@@ -170,7 +174,7 @@
               }
           });
        
-        equal(frmt(e.data('editable').value, 'dd.mm.yyyy'), d, 'value correct');
+        equal(frmt(e.data('editable').value, 'DD.MM.YYYY'), d, 'value correct');
             
         e.click();
         var p = tip(e);
@@ -215,7 +219,7 @@
               }
           });
        
-        equal(frmt(e.data('editable').value, 'dd.mm.yyyy'), d, 'value correct');
+        equal(frmt(e.data('editable').value, 'DD.MM.YYYY'), d, 'value correct');
             
         e.click();
         var p = tip(e);
@@ -240,4 +244,4 @@
         
      });        
    
-})();
+});

@@ -22,23 +22,25 @@ Automatically shown in inline mode.
             this.$input = this.$tpl.find('input');
             this.setClass();
             this.setAttr('placeholder');
-            
+
             this.$tpl.datetimepicker(this.options.datetimepicker);
-            
+
             //need to disable original event handlers
             this.$input.off('focus keydown');
             
             //update value of datepicker
             this.$input.keyup($.proxy(function(){
                this.$tpl.removeData('date');
-               this.$tpl.datetimepicker('update');
+               this.$tpl.data('DateTimePicker').date(this.$input.val());
             }, this));
             
         },   
       
        value2input: function(value) {
            this.$input.val(this.value2html(value));
-           this.$tpl.datetimepicker('update');
+           if(value) {
+               this.$tpl.data('DateTimePicker').date(value);
+           }
        },
         
        input2value: function() { 
@@ -58,17 +60,16 @@ Automatically shown in inline mode.
         /**
         @property tpl 
         **/         
-        tpl:'<div class="input-append date"><input type="text"/><span class="add-on"><i class="icon-th"></i></span></div>',
+        tpl:'<div class="input-group date" style="position: relative"><input type="text"/><span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span></div>',
         /**
         @property inputclass 
-        @default 'input-medium'
+        @default null
         **/         
-        inputclass: 'input-medium',
+        inputclass: null,
         
         /* datetimepicker config */
         datetimepicker:{
-            todayHighlight: false,
-            autoclose: true
+            format: 'L LT',
         }
     });
     

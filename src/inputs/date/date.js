@@ -16,21 +16,17 @@ $(function(){
         format: 'yyyy-mm-dd',    
         viewformat: 'dd/mm/yyyy',    
         datepicker: {
-                weekStart: 1
            }
         }
     });
 });
 </script>
 **/
+/*global moment*/
 (function ($) {
     "use strict";
     
     //store bootstrap-datepicker as bdateicker to exclude conflict with jQuery UI one
-    $.fn.bdatepicker = $.fn.datepicker.noConflict();
-    if(!$.fn.datepicker) { //if there were no other datepickers, keep also original name
-        $.fn.datepicker = $.fn.bdatepicker;    
-    }    
     
     var Date = function (options) {
         this.init('date', options, Date.defaults);
@@ -50,7 +46,7 @@ $(function(){
             
             //try parse datepicker config defined as json string in data-datepicker
             options.datepicker = $.fn.editableutils.tryParseJson(options.datepicker, true);
-            
+
             //overriding datepicker config (as by default jQuery extend() is not recursive)
             //since 1.4 datepicker internally uses viewformat instead of format. Format is for submit only
             this.options.datepicker = $.extend({}, defaults.datepicker, options.datepicker, {
@@ -58,19 +54,31 @@ $(function(){
             });
             
             //language
-            this.options.datepicker.language = this.options.datepicker.language || 'en'; 
+            this.options.datepicker.locale = this.options.datepicker.locale || moment.locale(); 
 
-            //store DPglobal
-            this.dpg = $.fn.bdatepicker.DPGlobal; 
-
-            //store parsed formats
-            this.parsedFormat = this.dpg.parseFormat(this.options.format);
-            this.parsedViewFormat = this.dpg.parseFormat(this.options.viewformat);            
+            this.dpg = {
+                parseDate: function (txt, fmt) {
+                    return moment(txt, fmt, true);
+                },
+                formatDate: function (x, fmt) {
+                    return x.format(fmt);
+                }
+            };
         },
         
         render: function () {
-            this.$input.bdatepicker(this.options.datepicker);
+            this.$input.datetimepicker(this.options.datepicker);
             
+            //adjust container position when viewMode changes
+            //see https://github.com/smalot/bootstrap-datetimepicker/pull/80
+            this.$input.on('changeMode', function(e) {
+                var f = $(this).closest('form').parent();
+                //timeout here, otherwise container changes position before form has new size
+                setTimeout(function(){
+                    f.triggerHandler('resize');
+                }, 0);
+            });
+
             //"clear" link
             if(this.options.clear) {
                 this.$clear = $('<a href="#"></a>').html(this.options.clear).click($.proxy(function(e){
@@ -84,20 +92,24 @@ $(function(){
         },
         
         value2html: function(value, element) {
-           var text = value ? this.dpg.formatDate(value, this.parsedViewFormat, this.options.datepicker.language) : '';
-           Date.superclass.value2html.call(this, text, element); 
+            var text = value ? this.dpg.formatDate(value, this.options.viewformat, this.options.datepicker.locale, this.options.formatType) : '';
+            if(element) {
+                Date.superclass.value2html.call(this, text, element);
+            } else {
+                return text;
+            }
         },
 
         html2value: function(html) {
-            return this.parseDate(html, this.parsedViewFormat);
+            return this.parseDate(html, this.options.viewformat); 
         },   
 
         value2str: function(value) {
-            return value ? this.dpg.formatDate(value, this.parsedFormat, this.options.datepicker.language) : '';
+            return value ? this.dpg.formatDate(value, this.options.format, this.options.datepicker.locale, this.options.formatType) : '';
         }, 
 
         str2value: function(str) {
-            return this.parseDate(str, this.parsedFormat);
+            return this.parseDate(str, this.options.format);
         }, 
 
         value2submit: function(value) {
@@ -105,18 +117,22 @@ $(function(){
         },                    
 
         value2input: function(value) {
-            this.$input.bdatepicker('update', value);
+            if(value) {
+                this.$input.data('DateTimePicker').date(value);
+            }
         },
 
         input2value: function() { 
-            return this.$input.data('datepicker').date;
+            //date may be cleared, in that case getDate() triggers error
+            var dt = this.$input.data('DateTimePicker');
+            return dt.date ? dt.date() : null;
         },       
 
         activate: function() {
         },
 
         clear:  function() {
-            this.$input.data('datepicker').date = null;
+            this.$input.data('DateTimePicker').date = null;
             this.$input.find('.active').removeClass('active');
             if(!this.options.showbuttons) {
                 this.$input.closest('form').submit(); 
@@ -152,9 +168,9 @@ $(function(){
        parseDate: function(str, format) {
            var date = null, formattedBack;
            if(str) {
-               date = this.dpg.parseDate(str, format, this.options.datepicker.language);
+                date = this.dpg.parseDate(str, format, this.options.datepicker.locale, this.options.formatType);
                if(typeof str === 'string') {
-                   formattedBack = this.dpg.formatDate(date, format, this.options.datepicker.language);
+                    formattedBack = this.dpg.formatDate(date, format, this.options.datepicker.locale, this.options.formatType);
                    if(str !== formattedBack) {
                        date = null;
                    }
@@ -178,13 +194,13 @@ $(function(){
         inputclass: null,
         /**
         Format used for sending value to server. Also applied when converting date from <code>data-value</code> attribute.<br>
-        Possible tokens are: <code>d, dd, m, mm, yy, yyyy</code>  
+        See MomentJs for possible formatting tokens.
 
         @property format 
         @type string
-        @default yyyy-mm-dd
+        @default YYYY-MM-DD
         **/
-        format:'yyyy-mm-dd',
+        format:'YYYY-MM-DD',
         /**
         Format used for displaying date. Also applied when converting date from element's text on init.   
         If not specified equals to <code>format</code>
@@ -196,22 +212,20 @@ $(function(){
         viewformat: null,
         /**
         Configuration of datepicker.
-        Full list of options: http://bootstrap-datepicker.readthedocs.org/en/latest/options.html
+        Full list of options: https://getdatepicker.com/4/Options/
 
         @property datepicker 
         @type object
         @default {
-            weekStart: 0,
             startView: 0,
             minViewMode: 0,
-            autoclose: false
+            autoclose: false,
+            pickTime: false
         }
         **/
         datepicker:{
-            weekStart: 0,
-            startView: 0,
-            minViewMode: 0,
-            autoclose: false
+            format: 'L',
+            inline: true,
         },
         /**
         Text shown as clear date button. 

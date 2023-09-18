@@ -1,13 +1,19 @@
-(function () {
+(function(factory) {
+    if (typeof define === 'function' && define.amd) {
+      // AMD environment
+      define(['jquery', 'moment'], factory);
+    } else {
+      // Global jQuery fallback
+      factory(jQuery, moment);
+    }
+  })(function ($, moment) {
    
-   var dpg, f = 'dd.mm.yyyy', mode;
+   var f = 'DD.MM.YYYY', mode;
    
    module("date-inline", {
         setup: function(){
             fx = $('#async-fixture');
-            dpg = $.fn.bdatepicker.DPGlobal;
             $.support.transition = false;
-            
             mode = $.fn.editable.defaults.mode;
             $.fn.editable.defaults.mode = 'inline';
         },
@@ -18,7 +24,9 @@
     });
     
     function frmt(date, format) {
-       return dpg.formatDate(date, dpg.parseFormat(format), 'en');  
+        //convert to utc
+        date = moment($.fn.editabletypes.datetime.prototype.toUTC(date)); 
+        return date.format(format);  
     }
      
     asyncTest("container should contain input with value and save new entered date", function () {
@@ -28,7 +36,6 @@
                 format: f,
                 viewformat: f,
                 datepicker: {
-                   weekStart: 1 
                 }        
             }),
             nextD = '16.05.1984',
@@ -41,7 +48,7 @@
               }
           });
        
-        equal(frmt(e.data('editable').value, 'dd.mm.yyyy'), d, 'value correct');
+        equal(frmt(e.data('editable').value, 'DD.MM.YYYY'), d, 'value correct');
 
         e.click();
         var p = tip(e);
@@ -88,21 +95,21 @@
         var dview = '15/05/1984',
             d = '1984-05-15',
             e = $('<a href="#" data-type="date" data-pk="1" data-url="post-date1.php">'+dview+'</a>').appendTo('#qunit-fixture').editable({
-                format: 'yyyy-mm-dd',
-                viewformat: 'dd/mm/yyyy'
+                format: 'YYYY-MM-DD',
+                viewformat: 'DD/MM/YYYY'
             }),
             nextD = '1984-05-16',
             nextDview = '16/05/1984';
         
-          equal(frmt(e.data('editable').value, 'yyyy-mm-dd'), d, 'value correct');
+          equal(frmt(e.data('editable').value, 'YYYY-MM-DD'), d, 'value correct');
      });       
     
      test("viewformat, init by value", function () {
         var dview = '15/05/1984',
             d = '1984-05-15',
-            e = $('<a href="#" data-type="date" data-pk="1" data-format="yyyy-mm-dd" data-viewformat="dd/mm/yyyy"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
+            e = $('<a href="#" data-type="date" data-pk="1" data-format="YYYY-MM-DD" data-viewformat="DD/MM/YYYY"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
         
-        equal(frmt(e.data('editable').value, 'yyyy-mm-dd'), d, 'value correct');
+        equal(frmt(e.data('editable').value, 'YYYY-MM-DD'), d, 'value correct');
         equal(e.text(), dview, 'text correct');
      });    
     
@@ -115,7 +122,7 @@
             }),
             nextD = '16.05.1984';
         
-        equal(frmt(e.data('editable').value, 'dd.mm.yyyy'), d, 'value correct');
+        equal(frmt(e.data('editable').value, 'DD.MM.YYYY'), d, 'value correct');
             
         e.click();
         var p = tip(e);
@@ -133,4 +140,4 @@
         equal(e.data('editable').value, null, 'date set to null');
         equal(e.text(), $.fn.editable.defaults.emptytext , 'emptytext shown');            
      });     
-})();
+});

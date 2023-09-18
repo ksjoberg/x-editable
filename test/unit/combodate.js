@@ -1,12 +1,19 @@
-$(function () {         
+(function(factory) {
+    if (typeof define === 'function' && define.amd) {
+      // AMD environment
+      define(['jquery', 'moment'], factory);
+    } else {
+      // Global jQuery fallback
+      factory(jQuery, moment);
+    }
+  })(function ($, moment) {
    
    //formats
    var 
      fd = 'DD.MM.YYYY', vfd = 'DD-MM-YYYY', vd = '15-05-1984',
-     fdt = 'DD-MM-YYYY hh:mm:ss A', vfdt = 'DD MMM YYYY h:m:s a', vdt = '15-05-1984 08:20:30 PM';
+     fdt = 'DD-MM-YYYY HH:mm:ss A', vfdt = 'DD MMM YYYY h:m:s a', vdt = '15-05-1984 08:20:30 PM';
 
-   
-   module("combodate", {
+    module("combodate", {
         setup: function(){
             fx = $('#async-fixture');
             $.support.transition = false;

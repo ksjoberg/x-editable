@@ -1,11 +1,10 @@
-$(function () {         
+define(["jquery", "moment"], function ($, moment) {
    
-   var dpg, f = 'dd.mm.yyyy', mode;
+   var f = 'DD.MM.YYYY', mode;
    
    module("datefield", {
         setup: function(){
             fx = $('#async-fixture');
-            dpg = $.fn.bdatepicker.DPGlobal;
             $.support.transition = false;
             
             mode = $.fn.editable.defaults.mode;
@@ -18,7 +17,7 @@ $(function () {
     });
     
     function frmt(date, format) {
-       return dpg.formatDate(date, dpg.parseFormat(format), 'en');  
+       return moment(date).format(format);  
     }
      
     asyncTest("container should contain input with value and save new entered date", function () {
@@ -28,7 +27,6 @@ $(function () {
                 format: f,
                 viewformat: f,
                 datepicker: {
-                   weekStart: 1 
                 }        
             }),
             nextD = '16.05.1984',
@@ -40,8 +38,8 @@ $(function () {
                   equal(settings.data.value, finalD, 'submitted value correct');            
               }
           });
-       
-        equal(frmt(e.data('editable').value, 'dd.mm.yyyy'), d, 'value correct');
+
+        equal(frmt(e.data('editable').value, 'DD.MM.YYYY'), d, 'value correct');
             
         e.click();
         var p = tip(e);
@@ -50,9 +48,9 @@ $(function () {
         equal(p.find('input').val(), d, 'date set correct');
         
         //open picker
-        p.find('span.add-on').click();
-        var picker = p.find('span.add-on').parent().data().datepicker.picker;
-        
+        p.find('span.input-group-addon').click();
+        var picker = p.find('.bootstrap-datetimepicker-widget');
+
         ok(picker.is(':visible'), 'picker shown');
         ok(picker.find('td.day.active').is(':visible'), 'active day is visible');
         equal(picker.find('td.day.active').text(), 15, 'day shown correct');
@@ -63,9 +61,12 @@ $(function () {
         ok(!picker.is(':visible'), 'picker closed'); 
         
         equal(p.find('input').val(), nextD, 'next day set correct');
-                                              
+
+        //re-open picker
+        p.find('span.input-group-addon').click();
         p.find('input').val(finalD).trigger('keyup');
         
+        var picker = p.find('.bootstrap-datetimepicker-widget');
         equal(picker.find('td.day.active').text(), 17, 'picker active date updated');
     
         //submit
@@ -87,21 +88,21 @@ $(function () {
         var dview = '15/05/1984',
             d = '1984-05-15',
             e = $('<a href="#" data-type="date" data-pk="1" data-url="post-date1.php">'+dview+'</a>').appendTo('#qunit-fixture').editable({
-                format: 'yyyy-mm-dd',
-                viewformat: 'dd/mm/yyyy'
+                format: 'YYYY-MM-DD',
+                viewformat: 'DD/MM/YYYY'
             }),
             nextD = '1984-05-16',
             nextDview = '16/05/1984';
         
-          equal(frmt(e.data('editable').value, 'yyyy-mm-dd'), d, 'value correct');
+          equal(frmt(e.data('editable').value, 'YYYY-MM-DD'), d, 'value correct');
      });       
     
      test("viewformat, init by value", function () {
         var dview = '15/05/1984',
             d = '1984-05-15',
-            e = $('<a href="#" data-type="date" data-pk="1" data-format="yyyy-mm-dd" data-viewformat="dd/mm/yyyy"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
-        
-        equal(frmt(e.data('editable').value, 'yyyy-mm-dd'), d, 'value correct');
+            e = $('<a href="#" data-type="date" data-pk="1" data-format="YYYY-MM-DD" data-viewformat="DD/MM/YYYY"  data-value="'+d+'"></a>').appendTo('#qunit-fixture').editable();
+
+        equal(frmt(e.data('editable').value, 'YYYY-MM-DD'), d, 'value correct');
         equal(e.text(), dview, 'text correct');
      });    
     
@@ -114,7 +115,7 @@ $(function () {
             }),
             nextD = '16.05.1984';
         
-        equal(frmt(e.data('editable').value, 'dd.mm.yyyy'), d, 'value correct');
+        equal(frmt(e.data('editable').value, 'DD.MM.YYYY'), d, 'value correct');
             
         e.click();
         var p = tip(e);

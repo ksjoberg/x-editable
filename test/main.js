@@ -19,7 +19,41 @@ require(["loader", jqurl], function(loader) {
     addTests(config);
     
     requirejs.config(config);
-   
+
+    var locale = 'sv';
+    // Use a second config call to set the dynamic path.
+    // This allows the above config to be use in an r.js
+    // build, which will only look for the first requirejs.config
+    // call and which does not support arbitrary execution of
+    // code that is needed here to determine the locale.
+    // For the build, put in a paths or map config in the r.js
+    // build config to point 'moment/calculatedLocale' to the
+    // locale module you want bundled in a build, or set the paths
+    // config to be 'moment/calculatedLocale': 'empty:' to just
+    // skip it for the build and dynamically load it at runtime.
+    requirejs.config({
+        map: {
+            'moment-adapter': {
+                // Points the calculatedLocale to the dynamically determined ID.
+                'moment/calculatedLocale': 'moment/../locale/' + locale
+            }
+        }
+    });
+
+    // Define this module inline after the two requirejs calls. Or, it could be defined
+    // in its own file, an just make it an anonymous define in that case, define(['moment... 
+    define('moment-adapter', ['moment', 'moment/calculatedLocale'], function(moment) {
+        // ISO-8601, Europe
+        moment.updateLocale('en', {
+            week : {
+                dow : 1, // First day of week is Monday
+                doy : 4  // First week of year must contain 4 January (7 + 1 - 4)
+             }
+        });
+        //moment.locale(locale);
+        return moment;
+    });
+
     require(['test/unit/api'], 
     function() {
         //disable effects

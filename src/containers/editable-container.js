@@ -143,7 +143,7 @@ Applied as jQuery method.
 
         /* call native method of underlying container, e.g. this.$element.popover('method') */ 
         call: function() {
-            this.$element[this.containerName].apply(this.$element, arguments); 
+            this.$element[this.containerName].apply(this.$element, arguments);
         },        
         
         initContainer: function(){
@@ -218,7 +218,7 @@ Applied as jQuery method.
             //if form already exist - delete previous data 
             if(this.$form) {
                 //todo: destroy prev data!
-                //this.$form.destroy();
+                this.$form.remove();
             }
 
             this.$form = $('<div>');

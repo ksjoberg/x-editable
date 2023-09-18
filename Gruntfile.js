@@ -12,7 +12,8 @@ function getFiles() {
             form: [forms+'editable-form-bootstrap.js'],
             container: [containers+'editable-popover.js'],
             inputs: [
-                inputs+'date/bootstrap-datepicker/js/bootstrap-datepicker.js',
+                //don't build datepicker lib, should be included manually 
+                //inputs+'date/bootstrap-datepicker/js/bootstrap-datepicker.js',
                 inputs+'date/date.js', 
                 inputs+'date/datefield.js', 
                 inputs+'datetime/datetime.js', 
@@ -24,7 +25,7 @@ function getFiles() {
             css: [
                 inputs+'date/bootstrap-datepicker/css/datepicker.css'
                //don't build datetime lib, should be included manually
-               //inputs+'datetime/bootstrap-datetimepicker/css/datetimepicker.css'
+               //inputs+'datetime/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css'
                 ]
         },
         bootstrap3: {
@@ -32,7 +33,8 @@ function getFiles() {
             form: [forms+'editable-form-bootstrap3.js'],
             container: [containers+'editable-popover3.js'],
             inputs: [
-                inputs+'date/bootstrap-datepicker/js/bootstrap-datepicker.js',
+                //don't build datepicker lib, should be included manually 
+                //inputs+'date/bootstrap-datepicker/js/bootstrap-datepicker.js',
                 inputs+'date/date.js', 
                 inputs+'date/datefield.js', 
                 inputs+'datetime/datetime.js', 
@@ -43,9 +45,29 @@ function getFiles() {
                 //inputs+'typeahead.js'
                 ], 
             css: [
-                inputs+'date/bootstrap-datepicker/css/datepicker.css'
                //don't build datetime lib, should be included manually
-               //inputs+'datetime/bootstrap-datetimepicker/css/datetimepicker.css'
+               //inputs+'datetime/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css'
+                ]
+        }, 
+        bootstrap5: {
+            filePrefix: 'bootstrap', //to have bootstrap-editable.js instead of bootstrap3-editable
+            form: [forms+'editable-form-bootstrap5.js'],
+            container: [containers+'editable-popover5.js'],
+            inputs: [
+                //don't build datepicker lib, should be included manually 
+                //inputs+'date/bootstrap-datepicker/js/bootstrap-datepicker.js',
+                inputs+'date/date.js', 
+                inputs+'date/datefield.js', 
+                inputs+'datetime/datetime.js', 
+                inputs+'datetime/datetimefield.js'
+                //don't build datetime lib, should be included manually 
+                //inputs+'datetime/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js',
+                //no typeahead in bs3
+                //inputs+'typeahead.js'
+                ], 
+            css: [
+               //don't build datetime lib, should be included manually
+               //inputs+'datetime/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css'
                 ]
         }, 
         jqueryui: {
@@ -165,7 +187,7 @@ module.exports = function(grunt) {
         '* <%= pkg.description %>\n' +
         '* <%= pkg.homepage %>\n' +
         '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
-        ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */\n';
+        ' Licensed <%= _.map(pkg.licenses, "type").join(", ") %> */\n';
  
  files.concat_files.options = {banner: banner};
  files.min_files.options = {banner: banner};
@@ -275,6 +297,7 @@ module.exports = function(grunt) {
         dist: {
             files: [
             //image
+            {expand: true, flatten: true, dest: '<%= dist %>/bootstrap5-editable/img/', src: 'src/img/*'}, 
             {expand: true, flatten: true, dest: '<%= dist %>/bootstrap3-editable/img/', src: 'src/img/*'}, 
             {expand: true, flatten: true, dest: '<%= dist %>/bootstrap-editable/img/', src: 'src/img/*'},
             {expand: true, flatten: true, dest: '<%= dist %>/jqueryui-editable/img/', src: 'src/img/*'},
@@ -304,13 +327,14 @@ module.exports = function(grunt) {
   });
 
   //test task
-  grunt.registerTask('test', ['jshint', 'connect', 'qunit:bootstrap2']);
+  grunt.registerTask('test', ['jshint', 'connect', 'qunit:bootstrap3']);
   grunt.registerTask('test3', ['jshint', 'connect', 'qunit:bootstrap3']);
+  grunt.registerTask('test5', ['jshint', 'connect', 'qunit:bootstrap5']);
   grunt.registerTask('testall', [
     'jshint', 
     'connect', 
-    'qunit:bootstrap2', 
     'qunit:bootstrap3', 
+    'qunit:bootstrap5', 
     'qunit:jqueryui', 
     'qunit:plain'
   ]);  

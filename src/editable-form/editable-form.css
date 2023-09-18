@@ -19,12 +19,12 @@
 
 
 /* 
-  BS3 width:1005 for inputs breaks editable form in popup 
+  BS3 width:100% for inputs breaks editable form in popup 
   See: https://github.com/vitalets/x-editable/issues/393
 */
-.editableform .form-control {
+/*.editableform .form-control {
     width: auto;
-}
+}*/
 
 .editable-buttons {
    display: inline-block; /* should be inline to take effect of parent's white-space: nowrap */

@@ -1,7 +1,7 @@
-/*! X-editable - v1.5.4
+/*! x-editable - v1.5.3 
 * In-place editing with Twitter Bootstrap, jQuery UI or pure jQuery
 * http://github.com/vitalets/x-editable
-* Copyright (c) 2018 Vitaliy Potapov; Licensed MIT */
+* Copyright (c) 2023 Vitaliy Potapov; Licensed MIT */
 /**
 Form with single input element, two buttons and two states: normal/loading.
 Applied as jQuery method to DIV tag (not to form tag!). This is because form can be in loading state when spinner shown.
@@ -663,7 +663,8 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
         * see http://stackoverflow.com/questions/499126/jquery-set-cursor-position-in-text-area
         */        
         setCursorPosition: function(elem, pos) {
-            if (elem.setSelectionRange) {
+            // see: https://github.com/vitalets/x-editable/issues/939
+            if (elem.setSelectionRange && /text|search|password|tel|url/i.test(elem.type)) {
                 try { elem.setSelectionRange(pos, pos); } catch (e) {}
             } else if (elem.createTextRange) {
                 var range = elem.createTextRange();
@@ -1029,7 +1030,6 @@ Applied as jQuery method.
             }
             //second, try `containerName`
             container = this.$element.data(this.containerName);
-            
             return container;
         },
 
@@ -3625,24 +3625,24 @@ Time
 }(window.jQuery));
 
 /**
-Select2 input. Based on amazing work of Igor Vaynberg https://github.com/ivaynberg/select2.  
-Please see [original select2 docs](http://ivaynberg.github.com/select2) for detailed description and options.  
- 
-You should manually download and include select2 distributive:  
+Select2 input. Based on amazing work of Igor Vaynberg https://github.com/ivaynberg/select2.
+Please see [original select2 docs](http://ivaynberg.github.com/select2) for detailed description and options.
 
-    <link href="select2/select2.css" rel="stylesheet" type="text/css"></link>  
-    <script src="select2/select2.js"></script>  
-    
-To make it **bootstrap-styled** you can use css from [here](https://github.com/t0m/select2-bootstrap-css): 
+You should manually download and include select2 distributive:
 
-    <link href="select2-bootstrap.css" rel="stylesheet" type="text/css"></link>    
-    
-**Note:** currently `autotext` feature does not work for select2 with `ajax` remote source.    
-You need initially put both `data-value` and element's text youself:    
+    <link href="select2/select2.css" rel="stylesheet" type="text/css"></link>
+    <script src="select2/select2.js"></script>
+
+To make it **bootstrap-styled** you can use css from [here](https://github.com/t0m/select2-bootstrap-css):
+
+    <link href="select2-bootstrap.css" rel="stylesheet" type="text/css"></link>
+
+**Note:** currently `autotext` feature does not work for select2 with `ajax` remote source.
+You need initially put both `data-value` and element's text youself:
 
     <a href="#" data-type="select2" data-value="1">Text1</a>
-    
-    
+
+
 @class select2
 @extends abstractinput
 @since 1.4.1
@@ -3699,34 +3699,35 @@ $(function(){
                 return $.get('/getCountryById', { query: element.val() }, function (data) {
                     callback(data);
                 });
-            } 
-        }  
+            }
+        }
     });
 });
 </script>
 **/
 (function ($) {
     "use strict";
-    
+
     var Constructor = function (options) {
         this.init('select2', options, Constructor.defaults);
 
         options.select2 = options.select2 || {};
 
         this.sourceData = null;
+        this.scope = options.scope;
 
         //placeholder
         if(options.placeholder) {
             options.select2.placeholder = options.placeholder;
         }
-       
+
         //if not `tags` mode, use source
         if(!options.select2.tags && options.source) {
             var source = options.source;
             //if source is function, call it (once!)
             if ($.isFunction(options.source)) {
                 source = options.source.call(options.scope);
-            }               
+            }
 
             if (typeof source === 'string') {
                 options.select2.ajax = options.select2.ajax || {};
@@ -3734,8 +3735,8 @@ $(function(){
                 if(!options.select2.ajax.data) {
                     options.select2.ajax.data = function(term) {return { query:term };};
                 }
-                if(!options.select2.ajax.results) {
-                    options.select2.ajax.results = function(data) { return {results:data };};
+                if(!options.select2.ajax.processResults) {
+                    options.select2.ajax.processResults = function(data) { return {results:data };};
                 }
                 options.select2.ajax.url = source;
             } else {
@@ -3743,7 +3744,7 @@ $(function(){
                 this.sourceData = this.convertSource(source);
                 options.select2.data = this.sourceData;
             }
-        } 
+        }
 
         //overriding objects in config (as by default jQuery extend() is not recursive)
         this.options.select2 = $.extend({}, Constructor.defaults.select2, options.select2);
@@ -3773,7 +3774,7 @@ $(function(){
         render: function() {
             this.setClass();
 
-            //can not apply select2 here as it calls initSelection 
+            //can not apply select2 here as it calls initSelection
             //over input that does not have correct value yet.
             //apply select2 only in value2input
             //this.$input.select2(this.options.select2);
@@ -3788,95 +3789,120 @@ $(function(){
 
             //trigger resize of editableform to re-position container in multi-valued mode
             if(this.isMultiple) {
-               this.$input.on('change', function() {
-                   $(this).closest('form').parent().triggerHandler('resize');
-               });
+                this.$input.on('change', function() {
+                    $(this).closest('form').parent().triggerHandler('resize');
+                });
             }
        },
 
        value2html: function(value, element) {
-           var text = '', data,
-               that = this;
+            var text = '', data,
+                that = this;
 
-           if(this.options.select2.tags) { //in tags mode just assign value
-              data = value; 
-              //data = $.fn.editableutils.itemsByValue(value, this.options.select2.tags, this.idFunc);
-           } else if(this.sourceData) {
-              data = $.fn.editableutils.itemsByValue(value, this.sourceData, this.idFunc); 
-           } else {
-              //can not get list of possible values 
-              //(e.g. autotext for select2 with ajax source)
-           }
+            if(this.options.select2.tags) { //in tags mode just assign value
+                data = value;
+                //data = $.fn.editableutils.itemsByValue(value, this.options.select2.tags, this.idFunc);
+            } else if(this.sourceData) {
+                data = $.fn.editableutils.itemsByValue(value, this.sourceData, this.idFunc);
+            } else {
+                data = this.$input.find(':selected').toArray();
+                //can not get list of possible values
+                //(e.g. autotext for select2 with ajax source)
+            }
 
-           //data may be array (when multiple values allowed)
-           if($.isArray(data)) {
-               //collect selected data and show with separator
-               text = [];
-               $.each(data, function(k, v){
-                   text.push(v && typeof v === 'object' ? that.formatSelection(v) : v);
-               });
-           } else if(data) {
-               text = that.formatSelection(data);
-           }
+            //data may be array (when multiple values allowed)
+            if($.isArray(data)) {
+                //collect selected data and show with separator
+                text = [];
+                $.each(data, function(k, v){
+                    text.push(v && typeof v === 'object' ? that.formatSelection(v) : v);
+                });
+            } else if(data) {
+                text = that.formatSelection(data);
+            }
 
-           text = $.isArray(text) ? text.join(this.options.viewseparator) : text;
+            text = $.isArray(text) ? text.join(this.options.viewseparator) : text;
 
-           //$(element).text(text);
-           Constructor.superclass.value2html.call(this, text, element); 
-       },
+            //$(element).text(text);
+            Constructor.superclass.value2html.call(this, text, element);
+        },
 
-       html2value: function(html) {
-           return this.options.select2.tags ? this.str2value(html, this.options.viewseparator) : null;
-       },
+        html2value: function(html) {
+            return this.options.select2.tags ? this.str2value(html, this.options.viewseparator) : null;
+        },
 
-       value2input: function(value) {
-           // if value array => join it anyway
-           if($.isArray(value)) {
-              value = value.join(this.getSeparator());
-           }
+        value2input: function(value) {
+            //for remote source just set value, text is updated by initSelection
+            if(!this.$input.data('select2')) {
+                if (this.options.select2.multiple)
+                {
+                    this.$input.attr('multiple', 'multiple');
+                } else if (this.options.select2.placeholder) {
+                    // for single selects with placeholder
+                    // add a blank <option> as the first option
+                    var option = new Option('', '', value == null, value == null);
+                    // Append it to the select
+                    this.$input.append(option);
+                }
 
-           //for remote source just set value, text is updated by initSelection
-           if(!this.$input.data('select2')) {
-               this.$input.val(value);
-               this.$input.select2(this.options.select2);
-           } else {
-               //second argument needed to separate initial change from user's click (for autosubmit)   
-               this.$input.val(value).trigger('change', true); 
+                if (value && this.isRemote && !this.options.select2.tags)
+                {
+                    var optionvalues = value;
+                    if(!$.isArray(optionvalues))
+                    {
+                        optionvalues = [optionvalues];
+                    }
+
+                    var optiontexts = $(this.scope).text().split(this.options.viewseparator);
+                    optionvalues.forEach(function(val, index) {
+                        var option = new Option(optiontexts[index], val, true, true);
+                        // Append it to the select
+                        this.$input.append(option);
+                    }.bind(this));
+                }
+                this.$input.select2(this.options.select2);
+                if (!this.isRemote)
+                {
+                    this.$input.val(value).trigger('change', true);
+                }
+            } else {
+               //second argument needed to separate initial change from user's click (for autosubmit)
+               this.$input.val(value).trigger('change', true);
 
                //Uncaught Error: cannot call val() if initSelection() is not defined
                //this.$input.select2('val', value);
-           }
+            }
 
-           // if defined remote source AND no multiple mode AND no user's initSelection provided --> 
-           // we should somehow get text for provided id.
-           // The solution is to use element's text as text for that id (exclude empty)
-           if(this.isRemote && !this.isMultiple && !this.options.select2.initSelection) {
-               // customId and customText are methods to extract `id` and `text` from data object
-               // we can use this workaround only if user did not define these methods
-               // otherwise we cant construct data object
-               var customId = this.options.select2.id,
-                   customText = this.options.select2.formatSelection;
+            // if defined remote source AND no multiple mode AND no user's initSelection provided -->
+            // we should somehow get text for provided id.
+            // The solution is to use element's text as text for that id (exclude empty)
+            if(this.isRemote && !this.isMultiple && !this.options.select2.initSelection && false) {
+                // customId and customText are methods to extract `id` and `text` from data object
+                // we can use this workaround only if user did not define these methods
+                // otherwise we cant construct data object
+                var customId = this.options.select2.id,
+                    customText = this.options.select2.formatSelection;
 
-               if(!customId && !customText) {
-                   var $el = $(this.options.scope);
-                   if (!$el.data('editable').isEmpty) {
-                       var data = {id: value, text: $el.text()};
-                       this.$input.select2('data', data); 
-                   }
-               }
-           }
-       },
-       
-       input2value: function() { 
-           return this.$input.select2('val');
-       },
+                if(!customId && !customText) {
+                    var $el = $(this.options.scope);
+                    if (!$el.data('editable').isEmpty) {
+                        var newOption = new Option($el.text(), value, false, false);
+                        this.$input.append(newOption).trigger('change');
+                    }
+                }
+            }
+        },
 
-       str2value: function(str, separator) {
+        input2value: function() {
+            return this.$input.val();
+        },
+
+        str2value: function(str, separator) {
             if(typeof str !== 'string' || !this.isMultiple) {
                 return str;
             }
 
-            separator = separator || this.getSeparator();
+            separator = separator || this.options.separator;
 
             var val, i, l;
 
@@ -3889,7 +3915,7 @@ $(function(){
             }
 
             return val;
-       },
+        },
 
         autosubmit: function() {
             this.$input.on('change', function(e, isInitial){
@@ -3897,10 +3923,6 @@ $(function(){
                   $(this).closest('form').submit();
                 }
             });
-        },
-
-        getSeparator: function() {
-            return this.options.select2.separator || $.fn.select2.defaults.separator;
         },
 
         /*
@@ -3918,11 +3940,13 @@ $(function(){
             }
             return source;
         },
-        
+
+        // see: https://github.com/vitalets/x-editable/pull/953
         activate: function() {
-            this.$input.select2('open');
+            //this.$input.val($(this.options.scope).data('editable').value).trigger('change');
+            this.$input.select2('focus');
         },
-        
+
         destroy: function() {
             if(this.$input) {
                 if(this.$input.data('select2')) {
@@ -3930,27 +3954,32 @@ $(function(){
                 }
             }
         }
-        
+
     });
 
     Constructor.defaults = $.extend({}, $.fn.editabletypes.abstractinput.defaults, {
         /**
-        @property tpl 
+        @property tpl
         @default <input type="hidden">
         **/
-        tpl:'<input type="hidden">',
+        tpl:'<select></select>',
         /**
         Configuration of select2. [Full list of options](http://ivaynberg.github.com/select2).
 
-        @property select2 
+        @property select2
         @type object
         @default null
         **/
-        select2: null,
+        select2: {
+            //commented due to failing test, running `grunt test3`
+            //dropdownParent: '.popover:last',
+            width: '20em',
+            dropdownAutoWidth: true,
+        },
         /**
         Placeholder attribute of select
 
-        @property placeholder 
+        @property placeholder
         @type string
         @default null
         **/
@@ -3960,17 +3989,24 @@ $(function(){
         Please note, that format is different from simple `select` input: use 'id' instead of 'value'.
         E.g. `[{id: 1, text: "text1"}, {id: 2, text: "text2"}, ...]`.
 
-        @property source 
+        @property source
         @type array|string|function
-        @default null        
+        @default null
         **/
         source: null,
         /**
-        Separator used to display tags.
+        Separator used to parse values.
 
-        @property viewseparator 
+        @property separator
         @type string
-        @default ', '        
+        @default ','
+        **/
+        separator: ',',
+
+        /**
+        @property viewseparator
+        @type string
+        @default ', '
         **/
         viewseparator: ', '
     });
@@ -4703,7 +4739,7 @@ $(function(){
 }(window.jQuery));
 
 /*
-Editableform based on Twitter Bootstrap 3
+Editableform based on Twitter Bootstrap 5
 */
 (function ($) {
     "use strict";
@@ -4720,6 +4756,7 @@ Editableform based on Twitter Bootstrap 3
         initInput: function() {  
             pInitInput.apply(this);
 
+            //for bs5 set default class `form-control` to standard inputs
             var emptyInputClass = this.input.options.inputclass === null || this.input.options.inputclass === false;
             var defaultClass = 'form-control-sm';
             
@@ -4733,7 +4770,7 @@ Editableform based on Twitter Bootstrap 3
                 }
             }             
         
-            //apply size class also to buttons (to fit size of control)
+            //apply bs3 size class also to buttons (to fit size of control)
             var $btn = this.$form.find('.editable-buttons');
             var classes = emptyInputClass ? [defaultClass] : this.input.options.inputclass.split(' ');
             for(var i=0; i<classes.length; i++) {
@@ -4763,13 +4800,14 @@ Editableform based on Twitter Bootstrap 3
     $.fn.editableform.errorGroupClass = 'has-error';
     $.fn.editableform.errorBlockClass = null;  
     //engine
-    $.fn.editableform.engine = 'bs4';  
+    $.fn.editableform.engine = 'bs5';  
 }(window.jQuery));
 /**
 * Editable Popover for Bootstrap 5 based on Popper.js
 * ---------------------
 * requires bootstrap-popover.js
 */
+/*global bootstrap*/
 (function ($) {
     "use strict";
 
@@ -4840,1262 +4878,6 @@ Editableform based on Twitter Bootstrap 3
     });
     
 }(window.jQuery));
-
-/* =========================================================
- * bootstrap-datepicker.js
- * http://www.eyecon.ro/bootstrap-datepicker
- * =========================================================
- * Copyright 2012 Stefan Petre
- * Improvements by Andrew Rowls
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ========================================================= */
-
-(function( $ ) {
-
-	function UTCDate(){
-		return new Date(Date.UTC.apply(Date, arguments));
-	}
-	function UTCToday(){
-		var today = new Date();
-		return UTCDate(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
-	}
-
-	// Picker object
-
-	var Datepicker = function(element, options) {
-		var that = this;
-
-		this._process_options(options);
-
-		this.element = $(element);
-		this.isInline = false;
-		this.isInput = this.element.is('input');
-		this.component = this.element.is('.date') ? this.element.find('.add-on, .btn') : false;
-		this.hasInput = this.component && this.element.find('input').length;
-		if(this.component && this.component.length === 0)
-			this.component = false;
-
-		this.picker = $(DPGlobal.template);
-		this._buildEvents();
-		this._attachEvents();
-
-		if(this.isInline) {
-			this.picker.addClass('datepicker-inline').appendTo(this.element);
-		} else {
-			this.picker.addClass('datepicker-dropdown dropdown-menu');
-		}
-
-		if (this.o.rtl){
-			this.picker.addClass('datepicker-rtl');
-			this.picker.find('.prev i, .next i')
-						.toggleClass('icon-arrow-left icon-arrow-right');
-		}
-
-
-		this.viewMode = this.o.startView;
-
-		if (this.o.calendarWeeks)
-			this.picker.find('tfoot th.today')
-						.attr('colspan', function(i, val){
-							return parseInt(val) + 1;
-						});
-
-		this._allow_update = false;
-
-		this.setStartDate(this.o.startDate);
-		this.setEndDate(this.o.endDate);
-		this.setDaysOfWeekDisabled(this.o.daysOfWeekDisabled);
-
-		this.fillDow();
-		this.fillMonths();
-
-		this._allow_update = true;
-
-		this.update();
-		this.showMode();
-
-		if(this.isInline) {
-			this.show();
-		}
-	};
-
-	Datepicker.prototype = {
-		constructor: Datepicker,
-
-		_process_options: function(opts){
-			// Store raw options for reference
-			this._o = $.extend({}, this._o, opts);
-			// Processed options
-			var o = this.o = $.extend({}, this._o);
-
-			// Check if "de-DE" style date is available, if not language should
-			// fallback to 2 letter code eg "de"
-			var lang = o.language;
-			if (!dates[lang]) {
-				lang = lang.split('-')[0];
-				if (!dates[lang])
-					lang = defaults.language;
-			}
-			o.language = lang;
-
-			switch(o.startView){
-				case 2:
-				case 'decade':
-					o.startView = 2;
-					break;
-				case 1:
-				case 'year':
-					o.startView = 1;
-					break;
-				default:
-					o.startView = 0;
-			}
-
-			switch (o.minViewMode) {
-				case 1:
-				case 'months':
-					o.minViewMode = 1;
-					break;
-				case 2:
-				case 'years':
-					o.minViewMode = 2;
-					break;
-				default:
-					o.minViewMode = 0;
-			}
-
-			o.startView = Math.max(o.startView, o.minViewMode);
-
-			o.weekStart %= 7;
-			o.weekEnd = ((o.weekStart + 6) % 7);
-
-			var format = DPGlobal.parseFormat(o.format)
-			if (o.startDate !== -Infinity) {
-				o.startDate = DPGlobal.parseDate(o.startDate, format, o.language);
-			}
-			if (o.endDate !== Infinity) {
-				o.endDate = DPGlobal.parseDate(o.endDate, format, o.language);
-			}
-
-			o.daysOfWeekDisabled = o.daysOfWeekDisabled||[];
-			if (!$.isArray(o.daysOfWeekDisabled))
-				o.daysOfWeekDisabled = o.daysOfWeekDisabled.split(/[,\s]*/);
-			o.daysOfWeekDisabled = $.map(o.daysOfWeekDisabled, function (d) {
-				return parseInt(d, 10);
-			});
-		},
-		_events: [],
-		_secondaryEvents: [],
-		_applyEvents: function(evs){
-			for (var i=0, el, ev; i<evs.length; i++){
-				el = evs[i][0];
-				ev = evs[i][1];
-				el.on(ev);
-			}
-		},
-		_unapplyEvents: function(evs){
-			for (var i=0, el, ev; i<evs.length; i++){
-				el = evs[i][0];
-				ev = evs[i][1];
-				el.off(ev);
-			}
-		},
-		_buildEvents: function(){
-			if (this.isInput) { // single input
-				this._events = [
-					[this.element, {
-						focus: $.proxy(this.show, this),
-						keyup: $.proxy(this.update, this),
-						keydown: $.proxy(this.keydown, this)
-					}]
-				];
-			}
-			else if (this.component && this.hasInput){ // component: input + button
-				this._events = [
-					// For components that are not readonly, allow keyboard nav
-					[this.element.find('input'), {
-						focus: $.proxy(this.show, this),
-						keyup: $.proxy(this.update, this),
-						keydown: $.proxy(this.keydown, this)
-					}],
-					[this.component, {
-						click: $.proxy(this.show, this)
-					}]
-				];
-			}
-			else if (this.element.is('div')) {  // inline datepicker
-				this.isInline = true;
-			}
-			else {
-				this._events = [
-					[this.element, {
-						click: $.proxy(this.show, this)
-					}]
-				];
-			}
-
-			this._secondaryEvents = [
-				[this.picker, {
-					click: $.proxy(this.click, this)
-				}],
-				[$(window), {
-					resize: $.proxy(this.place, this)
-				}],
-				[$(document), {
-					mousedown: $.proxy(function (e) {
-						// Clicked outside the datepicker, hide it
-						if (!(
-							this.element.is(e.target) ||
-							this.element.find(e.target).size() ||
-							this.picker.is(e.target) ||
-							this.picker.find(e.target).size()
-						)) {
-							this.hide();
-						}
-					}, this)
-				}]
-			];
-		},
-		_attachEvents: function(){
-			this._detachEvents();
-			this._applyEvents(this._events);
-		},
-		_detachEvents: function(){
-			this._unapplyEvents(this._events);
-		},
-		_attachSecondaryEvents: function(){
-			this._detachSecondaryEvents();
-			this._applyEvents(this._secondaryEvents);
-		},
-		_detachSecondaryEvents: function(){
-			this._unapplyEvents(this._secondaryEvents);
-		},
-		_trigger: function(event, altdate){
-			var date = altdate || this.date,
-				local_date = new Date(date.getTime() + (date.getTimezoneOffset()*60000));
-
-			this.element.trigger({
-				type: event,
-				date: local_date,
-				format: $.proxy(function(altformat){
-					var format = altformat || this.o.format;
-					return DPGlobal.formatDate(date, format, this.o.language);
-				}, this)
-			});
-		},
-
-		show: function(e) {
-			if (!this.isInline)
-				this.picker.appendTo('body');
-			this.picker.show();
-			this.height = this.component ? this.component.outerHeight() : this.element.outerHeight();
-			this.place();
-			this._attachSecondaryEvents();
-			if (e) {
-				e.preventDefault();
-			}
-			this._trigger('show');
-		},
-
-		hide: function(e){
-			if(this.isInline) return;
-			if (!this.picker.is(':visible')) return;
-			this.picker.hide().detach();
-			this._detachSecondaryEvents();
-			this.viewMode = this.o.startView;
-			this.showMode();
-
-			if (
-				this.o.forceParse &&
-				(
-					this.isInput && this.element.val() ||
-					this.hasInput && this.element.find('input').val()
-				)
-			)
-				this.setValue();
-			this._trigger('hide');
-		},
-
-		remove: function() {
-			this.hide();
-			this._detachEvents();
-			this._detachSecondaryEvents();
-			this.picker.remove();
-			delete this.element.data().datepicker;
-			if (!this.isInput) {
-				delete this.element.data().date;
-			}
-		},
-
-		getDate: function() {
-			var d = this.getUTCDate();
-			return new Date(d.getTime() + (d.getTimezoneOffset()*60000));
-		},
-
-		getUTCDate: function() {
-			return this.date;
-		},
-
-		setDate: function(d) {
-			this.setUTCDate(new Date(d.getTime() - (d.getTimezoneOffset()*60000)));
-		},
-
-		setUTCDate: function(d) {
-			this.date = d;
-			this.setValue();
-		},
-
-		setValue: function() {
-			var formatted = this.getFormattedDate();
-			if (!this.isInput) {
-				if (this.component){
-					this.element.find('input').val(formatted);
-				}
-			} else {
-				this.element.val(formatted);
-			}
-		},
-
-		getFormattedDate: function(format) {
-			if (format === undefined)
-				format = this.o.format;
-			return DPGlobal.formatDate(this.date, format, this.o.language);
-		},
-
-		setStartDate: function(startDate){
-			this._process_options({startDate: startDate});
-			this.update();
-			this.updateNavArrows();
-		},
-
-		setEndDate: function(endDate){
-			this._process_options({endDate: endDate});
-			this.update();
-			this.updateNavArrows();
-		},
-
-		setDaysOfWeekDisabled: function(daysOfWeekDisabled){
-			this._process_options({daysOfWeekDisabled: daysOfWeekDisabled});
-			this.update();
-			this.updateNavArrows();
-		},
-
-		place: function(){
-						if(this.isInline) return;
-			var zIndex = parseInt(this.element.parents().filter(function() {
-							return $(this).css('z-index') != 'auto';
-						}).first().css('z-index'))+10;
-			var offset = this.component ? this.component.parent().offset() : this.element.offset();
-			var height = this.component ? this.component.outerHeight(true) : this.element.outerHeight(true);
-			this.picker.css({
-				top: offset.top + height,
-				left: offset.left,
-				zIndex: zIndex
-			});
-		},
-
-		_allow_update: true,
-		update: function(){
-			if (!this._allow_update) return;
-
-			var date, fromArgs = false;
-			if(arguments && arguments.length && (typeof arguments[0] === 'string' || arguments[0] instanceof Date)) {
-				date = arguments[0];
-				fromArgs = true;
-			} else {
-				date = this.isInput ? this.element.val() : this.element.data('date') || this.element.find('input').val();
-				delete this.element.data().date;
-			}
-
-			this.date = DPGlobal.parseDate(date, this.o.format, this.o.language);
-
-			if(fromArgs) this.setValue();
-
-			if (this.date < this.o.startDate) {
-				this.viewDate = new Date(this.o.startDate);
-			} else if (this.date > this.o.endDate) {
-				this.viewDate = new Date(this.o.endDate);
-			} else {
-				this.viewDate = new Date(this.date);
-			}
-			this.fill();
-		},
-
-		fillDow: function(){
-			var dowCnt = this.o.weekStart,
-			html = '<tr>';
-			if(this.o.calendarWeeks){
-				var cell = '<th class="cw">&nbsp;</th>';
-				html += cell;
-				this.picker.find('.datepicker-days thead tr:first-child').prepend(cell);
-			}
-			while (dowCnt < this.o.weekStart + 7) {
-				html += '<th class="dow">'+dates[this.o.language].daysMin[(dowCnt++)%7]+'</th>';
-			}
-			html += '</tr>';
-			this.picker.find('.datepicker-days thead').append(html);
-		},
-
-		fillMonths: function(){
-			var html = '',
-			i = 0;
-			while (i < 12) {
-				html += '<span class="month">'+dates[this.o.language].monthsShort[i++]+'</span>';
-			}
-			this.picker.find('.datepicker-months td').html(html);
-		},
-
-		setRange: function(range){
-			if (!range || !range.length)
-				delete this.range;
-			else
-				this.range = $.map(range, function(d){ return d.valueOf(); });
-			this.fill();
-		},
-
-		getClassNames: function(date){
-			var cls = [],
-				year = this.viewDate.getUTCFullYear(),
-				month = this.viewDate.getUTCMonth(),
-				currentDate = this.date.valueOf(),
-				today = new Date();
-			if (date.getUTCFullYear() < year || (date.getUTCFullYear() == year && date.getUTCMonth() < month)) {
-				cls.push('old');
-			} else if (date.getUTCFullYear() > year || (date.getUTCFullYear() == year && date.getUTCMonth() > month)) {
-				cls.push('new');
-			}
-			// Compare internal UTC date with local today, not UTC today
-			if (this.o.todayHighlight &&
-				date.getUTCFullYear() == today.getFullYear() &&
-				date.getUTCMonth() == today.getMonth() &&
-				date.getUTCDate() == today.getDate()) {
-				cls.push('today');
-			}
-			if (currentDate && date.valueOf() == currentDate) {
-				cls.push('active');
-			}
-			if (date.valueOf() < this.o.startDate || date.valueOf() > this.o.endDate ||
-				$.inArray(date.getUTCDay(), this.o.daysOfWeekDisabled) !== -1) {
-				cls.push('disabled');
-			}
-			if (this.range){
-				if (date > this.range[0] && date < this.range[this.range.length-1]){
-					cls.push('range');
-				}
-				if ($.inArray(date.valueOf(), this.range) != -1){
-					cls.push('selected');
-				}
-			}
-			return cls;
-		},
-
-		fill: function() {
-			var d = new Date(this.viewDate),
-				year = d.getUTCFullYear(),
-				month = d.getUTCMonth(),
-				startYear = this.o.startDate !== -Infinity ? this.o.startDate.getUTCFullYear() : -Infinity,
-				startMonth = this.o.startDate !== -Infinity ? this.o.startDate.getUTCMonth() : -Infinity,
-				endYear = this.o.endDate !== Infinity ? this.o.endDate.getUTCFullYear() : Infinity,
-				endMonth = this.o.endDate !== Infinity ? this.o.endDate.getUTCMonth() : Infinity,
-				currentDate = this.date && this.date.valueOf(),
-				tooltip;
-			this.picker.find('.datepicker-days thead th.datepicker-switch')
-						.text(dates[this.o.language].months[month]+' '+year);
-			this.picker.find('tfoot th.today')
-						.text(dates[this.o.language].today)
-						.toggle(this.o.todayBtn !== false);
-			this.picker.find('tfoot th.clear')
-						.text(dates[this.o.language].clear)
-						.toggle(this.o.clearBtn !== false);
-			this.updateNavArrows();
-			this.fillMonths();
-			var prevMonth = UTCDate(year, month-1, 28,0,0,0,0),
-				day = DPGlobal.getDaysInMonth(prevMonth.getUTCFullYear(), prevMonth.getUTCMonth());
-			prevMonth.setUTCDate(day);
-			prevMonth.setUTCDate(day - (prevMonth.getUTCDay() - this.o.weekStart + 7)%7);
-			var nextMonth = new Date(prevMonth);
-			nextMonth.setUTCDate(nextMonth.getUTCDate() + 42);
-			nextMonth = nextMonth.valueOf();
-			var html = [];
-			var clsName;
-			while(prevMonth.valueOf() < nextMonth) {
-				if (prevMonth.getUTCDay() == this.o.weekStart) {
-					html.push('<tr>');
-					if(this.o.calendarWeeks){
-						// ISO 8601: First week contains first thursday.
-						// ISO also states week starts on Monday, but we can be more abstract here.
-						var
-							// Start of current week: based on weekstart/current date
-							ws = new Date(+prevMonth + (this.o.weekStart - prevMonth.getUTCDay() - 7) % 7 * 864e5),
-							// Thursday of this week
-							th = new Date(+ws + (7 + 4 - ws.getUTCDay()) % 7 * 864e5),
-							// First Thursday of year, year from thursday
-							yth = new Date(+(yth = UTCDate(th.getUTCFullYear(), 0, 1)) + (7 + 4 - yth.getUTCDay())%7*864e5),
-							// Calendar week: ms between thursdays, div ms per day, div 7 days
-							calWeek =  (th - yth) / 864e5 / 7 + 1;
-						html.push('<td class="cw">'+ calWeek +'</td>');
-
-					}
-				}
-				clsName = this.getClassNames(prevMonth);
-				clsName.push('day');
-
-				var before = this.o.beforeShowDay(prevMonth);
-				if (before === undefined)
-					before = {};
-				else if (typeof(before) === 'boolean')
-					before = {enabled: before};
-				else if (typeof(before) === 'string')
-					before = {classes: before};
-				if (before.enabled === false)
-					clsName.push('disabled');
-				if (before.classes)
-					clsName = clsName.concat(before.classes.split(/\s+/));
-				if (before.tooltip)
-					tooltip = before.tooltip;
-
-				clsName = $.unique(clsName);
-				html.push('<td class="'+clsName.join(' ')+'"' + (tooltip ? ' title="'+tooltip+'"' : '') + '>'+prevMonth.getUTCDate() + '</td>');
-				if (prevMonth.getUTCDay() == this.o.weekEnd) {
-					html.push('</tr>');
-				}
-				prevMonth.setUTCDate(prevMonth.getUTCDate()+1);
-			}
-			this.picker.find('.datepicker-days tbody').empty().append(html.join(''));
-			var currentYear = this.date && this.date.getUTCFullYear();
-
-			var months = this.picker.find('.datepicker-months')
-						.find('th:eq(1)')
-							.text(year)
-							.end()
-						.find('span').removeClass('active');
-			if (currentYear && currentYear == year) {
-				months.eq(this.date.getUTCMonth()).addClass('active');
-			}
-			if (year < startYear || year > endYear) {
-				months.addClass('disabled');
-			}
-			if (year == startYear) {
-				months.slice(0, startMonth).addClass('disabled');
-			}
-			if (year == endYear) {
-				months.slice(endMonth+1).addClass('disabled');
-			}
-
-			html = '';
-			year = parseInt(year/10, 10) * 10;
-			var yearCont = this.picker.find('.datepicker-years')
-								.find('th:eq(1)')
-									.text(year + '-' + (year + 9))
-									.end()
-								.find('td');
-			year -= 1;
-			for (var i = -1; i < 11; i++) {
-				html += '<span class="year'+(i == -1 ? ' old' : i == 10 ? ' new' : '')+(currentYear == year ? ' active' : '')+(year < startYear || year > endYear ? ' disabled' : '')+'">'+year+'</span>';
-				year += 1;
-			}
-			yearCont.html(html);
-		},
-
-		updateNavArrows: function() {
-			if (!this._allow_update) return;
-
-			var d = new Date(this.viewDate),
-				year = d.getUTCFullYear(),
-				month = d.getUTCMonth();
-			switch (this.viewMode) {
-				case 0:
-					if (this.o.startDate !== -Infinity && year <= this.o.startDate.getUTCFullYear() && month <= this.o.startDate.getUTCMonth()) {
-						this.picker.find('.prev').css({visibility: 'hidden'});
-					} else {
-						this.picker.find('.prev').css({visibility: 'visible'});
-					}
-					if (this.o.endDate !== Infinity && year >= this.o.endDate.getUTCFullYear() && month >= this.o.endDate.getUTCMonth()) {
-						this.picker.find('.next').css({visibility: 'hidden'});
-					} else {
-						this.picker.find('.next').css({visibility: 'visible'});
-					}
-					break;
-				case 1:
-				case 2:
-					if (this.o.startDate !== -Infinity && year <= this.o.startDate.getUTCFullYear()) {
-						this.picker.find('.prev').css({visibility: 'hidden'});
-					} else {
-						this.picker.find('.prev').css({visibility: 'visible'});
-					}
-					if (this.o.endDate !== Infinity && year >= this.o.endDate.getUTCFullYear()) {
-						this.picker.find('.next').css({visibility: 'hidden'});
-					} else {
-						this.picker.find('.next').css({visibility: 'visible'});
-					}
-					break;
-			}
-		},
-
-		click: function(e) {
-			e.preventDefault();
-			var target = $(e.target).closest('span, td, th');
-			if (target.length == 1) {
-				switch(target[0].nodeName.toLowerCase()) {
-					case 'th':
-						switch(target[0].className) {
-							case 'datepicker-switch':
-								this.showMode(1);
-								break;
-							case 'prev':
-							case 'next':
-								var dir = DPGlobal.modes[this.viewMode].navStep * (target[0].className == 'prev' ? -1 : 1);
-								switch(this.viewMode){
-									case 0:
-										this.viewDate = this.moveMonth(this.viewDate, dir);
-										break;
-									case 1:
-									case 2:
-										this.viewDate = this.moveYear(this.viewDate, dir);
-										break;
-								}
-								this.fill();
-								break;
-							case 'today':
-								var date = new Date();
-								date = UTCDate(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
-
-								this.showMode(-2);
-								var which = this.o.todayBtn == 'linked' ? null : 'view';
-								this._setDate(date, which);
-								break;
-							case 'clear':
-								var element;
-								if (this.isInput)
-									element = this.element;
-								else if (this.component)
-									element = this.element.find('input');
-								if (element)
-									element.val("").change();
-								this._trigger('changeDate');
-								this.update();
-								if (this.o.autoclose)
-									this.hide();
-								break;
-						}
-						break;
-					case 'span':
-						if (!target.is('.disabled')) {
-							this.viewDate.setUTCDate(1);
-							if (target.is('.month')) {
-								var day = 1;
-								var month = target.parent().find('span').index(target);
-								var year = this.viewDate.getUTCFullYear();
-								this.viewDate.setUTCMonth(month);
-								this._trigger('changeMonth', this.viewDate);
-								if (this.o.minViewMode === 1) {
-									this._setDate(UTCDate(year, month, day,0,0,0,0));
-								}
-							} else {
-								var year = parseInt(target.text(), 10)||0;
-								var day = 1;
-								var month = 0;
-								this.viewDate.setUTCFullYear(year);
-								this._trigger('changeYear', this.viewDate);
-								if (this.o.minViewMode === 2) {
-									this._setDate(UTCDate(year, month, day,0,0,0,0));
-								}
-							}
-							this.showMode(-1);
-							this.fill();
-						}
-						break;
-					case 'td':
-						if (target.is('.day') && !target.is('.disabled')){
-							var day = parseInt(target.text(), 10)||1;
-							var year = this.viewDate.getUTCFullYear(),
-								month = this.viewDate.getUTCMonth();
-							if (target.is('.old')) {
-								if (month === 0) {
-									month = 11;
-									year -= 1;
-								} else {
-									month -= 1;
-								}
-							} else if (target.is('.new')) {
-								if (month == 11) {
-									month = 0;
-									year += 1;
-								} else {
-									month += 1;
-								}
-							}
-							this._setDate(UTCDate(year, month, day,0,0,0,0));
-						}
-						break;
-				}
-			}
-		},
-
-		_setDate: function(date, which){
-			if (!which || which == 'date')
-				this.date = new Date(date);
-			if (!which || which  == 'view')
-				this.viewDate = new Date(date);
-			this.fill();
-			this.setValue();
-			this._trigger('changeDate');
-			var element;
-			if (this.isInput) {
-				element = this.element;
-			} else if (this.component){
-				element = this.element.find('input');
-			}
-			if (element) {
-				element.change();
-				if (this.o.autoclose && (!which || which == 'date')) {
-					this.hide();
-				}
-			}
-		},
-
-		moveMonth: function(date, dir){
-			if (!dir) return date;
-			var new_date = new Date(date.valueOf()),
-				day = new_date.getUTCDate(),
-				month = new_date.getUTCMonth(),
-				mag = Math.abs(dir),
-				new_month, test;
-			dir = dir > 0 ? 1 : -1;
-			if (mag == 1){
-				test = dir == -1
-					// If going back one month, make sure month is not current month
-					// (eg, Mar 31 -> Feb 31 == Feb 28, not Mar 02)
-					? function(){ return new_date.getUTCMonth() == month; }
-					// If going forward one month, make sure month is as expected
-					// (eg, Jan 31 -> Feb 31 == Feb 28, not Mar 02)
-					: function(){ return new_date.getUTCMonth() != new_month; };
-				new_month = month + dir;
-				new_date.setUTCMonth(new_month);
-				// Dec -> Jan (12) or Jan -> Dec (-1) -- limit expected date to 0-11
-				if (new_month < 0 || new_month > 11)
-					new_month = (new_month + 12) % 12;
-			} else {
-				// For magnitudes >1, move one month at a time...
-				for (var i=0; i<mag; i++)
-					// ...which might decrease the day (eg, Jan 31 to Feb 28, etc)...
-					new_date = this.moveMonth(new_date, dir);
-				// ...then reset the day, keeping it in the new month
-				new_month = new_date.getUTCMonth();
-				new_date.setUTCDate(day);
-				test = function(){ return new_month != new_date.getUTCMonth(); };
-			}
-			// Common date-resetting loop -- if date is beyond end of month, make it
-			// end of month
-			while (test()){
-				new_date.setUTCDate(--day);
-				new_date.setUTCMonth(new_month);
-			}
-			return new_date;
-		},
-
-		moveYear: function(date, dir){
-			return this.moveMonth(date, dir*12);
-		},
-
-		dateWithinRange: function(date){
-			return date >= this.o.startDate && date <= this.o.endDate;
-		},
-
-		keydown: function(e){
-			if (this.picker.is(':not(:visible)')){
-				if (e.keyCode == 27) // allow escape to hide and re-show picker
-					this.show();
-				return;
-			}
-			var dateChanged = false,
-				dir, day, month,
-				newDate, newViewDate;
-			switch(e.keyCode){
-				case 27: // escape
-					this.hide();
-					e.preventDefault();
-					break;
-				case 37: // left
-				case 39: // right
-					if (!this.o.keyboardNavigation) break;
-					dir = e.keyCode == 37 ? -1 : 1;
-					if (e.ctrlKey){
-						newDate = this.moveYear(this.date, dir);
-						newViewDate = this.moveYear(this.viewDate, dir);
-					} else if (e.shiftKey){
-						newDate = this.moveMonth(this.date, dir);
-						newViewDate = this.moveMonth(this.viewDate, dir);
-					} else {
-						newDate = new Date(this.date);
-						newDate.setUTCDate(this.date.getUTCDate() + dir);
-						newViewDate = new Date(this.viewDate);
-						newViewDate.setUTCDate(this.viewDate.getUTCDate() + dir);
-					}
-					if (this.dateWithinRange(newDate)){
-						this.date = newDate;
-						this.viewDate = newViewDate;
-						this.setValue();
-						this.update();
-						e.preventDefault();
-						dateChanged = true;
-					}
-					break;
-				case 38: // up
-				case 40: // down
-					if (!this.o.keyboardNavigation) break;
-					dir = e.keyCode == 38 ? -1 : 1;
-					if (e.ctrlKey){
-						newDate = this.moveYear(this.date, dir);
-						newViewDate = this.moveYear(this.viewDate, dir);
-					} else if (e.shiftKey){
-						newDate = this.moveMonth(this.date, dir);
-						newViewDate = this.moveMonth(this.viewDate, dir);
-					} else {
-						newDate = new Date(this.date);
-						newDate.setUTCDate(this.date.getUTCDate() + dir * 7);
-						newViewDate = new Date(this.viewDate);
-						newViewDate.setUTCDate(this.viewDate.getUTCDate() + dir * 7);
-					}
-					if (this.dateWithinRange(newDate)){
-						this.date = newDate;
-						this.viewDate = newViewDate;
-						this.setValue();
-						this.update();
-						e.preventDefault();
-						dateChanged = true;
-					}
-					break;
-				case 13: // enter
-					this.hide();
-					e.preventDefault();
-					break;
-				case 9: // tab
-					this.hide();
-					break;
-			}
-			if (dateChanged){
-				this._trigger('changeDate');
-				var element;
-				if (this.isInput) {
-					element = this.element;
-				} else if (this.component){
-					element = this.element.find('input');
-				}
-				if (element) {
-					element.change();
-				}
-			}
-		},
-
-		showMode: function(dir) {
-			if (dir) {
-				this.viewMode = Math.max(this.o.minViewMode, Math.min(2, this.viewMode + dir));
-			}
-			/*
-				vitalets: fixing bug of very special conditions:
-				jquery 1.7.1 + webkit + show inline datepicker in bootstrap popover.
-				Method show() does not set display css correctly and datepicker is not shown.
-				Changed to .css('display', 'block') solve the problem.
-				See https://github.com/vitalets/x-editable/issues/37
-
-				In jquery 1.7.2+ everything works fine.
-			*/
-			//this.picker.find('>div').hide().filter('.datepicker-'+DPGlobal.modes[this.viewMode].clsName).show();
-			this.picker.find('>div').hide().filter('.datepicker-'+DPGlobal.modes[this.viewMode].clsName).css('display', 'block');
-			this.updateNavArrows();
-		}
-	};
-
-	var DateRangePicker = function(element, options){
-		this.element = $(element);
-		this.inputs = $.map(options.inputs, function(i){ return i.jquery ? i[0] : i; });
-		delete options.inputs;
-
-		$(this.inputs)
-			.datepicker(options)
-			.bind('changeDate', $.proxy(this.dateUpdated, this));
-
-		this.pickers = $.map(this.inputs, function(i){ return $(i).data('datepicker'); });
-		this.updateDates();
-	};
-	DateRangePicker.prototype = {
-		updateDates: function(){
-			this.dates = $.map(this.pickers, function(i){ return i.date; });
-			this.updateRanges();
-		},
-		updateRanges: function(){
-			var range = $.map(this.dates, function(d){ return d.valueOf(); });
-			$.each(this.pickers, function(i, p){
-				p.setRange(range);
-			});
-		},
-		dateUpdated: function(e){
-			var dp = $(e.target).data('datepicker'),
-				new_date = dp.getUTCDate(),
-				i = $.inArray(e.target, this.inputs),
-				l = this.inputs.length;
-			if (i == -1) return;
-
-			if (new_date < this.dates[i]){
-				// Date being moved earlier/left
-				while (i>=0 && new_date < this.dates[i]){
-					this.pickers[i--].setUTCDate(new_date);
-				}
-			}
-			else if (new_date > this.dates[i]){
-				// Date being moved later/right
-				while (i<l && new_date > this.dates[i]){
-					this.pickers[i++].setUTCDate(new_date);
-				}
-			}
-			this.updateDates();
-		},
-		remove: function(){
-			$.map(this.pickers, function(p){ p.remove(); });
-			delete this.element.data().datepicker;
-		}
-	};
-
-	function opts_from_el(el, prefix){
-		// Derive options from element data-attrs
-		var data = $(el).data(),
-			out = {}, inkey,
-			replace = new RegExp('^' + prefix.toLowerCase() + '([A-Z])'),
-			prefix = new RegExp('^' + prefix.toLowerCase());
-		for (var key in data)
-			if (prefix.test(key)){
-				inkey = key.replace(replace, function(_,a){ return a.toLowerCase(); });
-				out[inkey] = data[key];
-			}
-		return out;
-	}
-
-	function opts_from_locale(lang){
-		// Derive options from locale plugins
-		var out = {};
-		// Check if "de-DE" style date is available, if not language should
-		// fallback to 2 letter code eg "de"
-		if (!dates[lang]) {
-			lang = lang.split('-')[0]
-			if (!dates[lang])
-				return;
-		}
-		var d = dates[lang];
-		$.each(locale_opts, function(i,k){
-			if (k in d)
-				out[k] = d[k];
-		});
-		return out;
-	}
-
-	var old = $.fn.datepicker;
-	var datepicker = $.fn.datepicker = function ( option ) {
-		var args = Array.apply(null, arguments);
-		args.shift();
-		var internal_return,
-			this_return;
-		this.each(function () {
-			var $this = $(this),
-				data = $this.data('datepicker'),
-				options = typeof option == 'object' && option;
-			if (!data) {
-				var elopts = opts_from_el(this, 'date'),
-					// Preliminary otions
-					xopts = $.extend({}, defaults, elopts, options),
-					locopts = opts_from_locale(xopts.language),
-					// Options priority: js args, data-attrs, locales, defaults
-					opts = $.extend({}, defaults, locopts, elopts, options);
-				if ($this.is('.input-daterange') || opts.inputs){
-					var ropts = {
-						inputs: opts.inputs || $this.find('input').toArray()
-					};
-					$this.data('datepicker', (data = new DateRangePicker(this, $.extend(opts, ropts))));
-				}
-				else{
-					$this.data('datepicker', (data = new Datepicker(this, opts)));
-				}
-			}
-			if (typeof option == 'string' && typeof data[option] == 'function') {
-				internal_return = data[option].apply(data, args);
-				if (internal_return !== undefined)
-					return false;
-			}
-		});
-		if (internal_return !== undefined)
-			return internal_return;
-		else
-			return this;
-	};
-
-	var defaults = $.fn.datepicker.defaults = {
-		autoclose: false,
-		beforeShowDay: $.noop,
-		calendarWeeks: false,
-		clearBtn: false,
-		daysOfWeekDisabled: [],
-		endDate: Infinity,
-		forceParse: true,
-		format: 'mm/dd/yyyy',
-		keyboardNavigation: true,
-		language: 'en',
-		minViewMode: 0,
-		rtl: false,
-		startDate: -Infinity,
-		startView: 0,
-		todayBtn: false,
-		todayHighlight: false,
-		weekStart: 0
-	};
-	var locale_opts = $.fn.datepicker.locale_opts = [
-		'format',
-		'rtl',
-		'weekStart'
-	];
-	$.fn.datepicker.Constructor = Datepicker;
-	var dates = $.fn.datepicker.dates = {
-		en: {
-			days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-			daysShort: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-			daysMin: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-			months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-			monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-			today: "Today",
-			clear: "Clear"
-		}
-	};
-
-	var DPGlobal = {
-		modes: [
-			{
-				clsName: 'days',
-				navFnc: 'Month',
-				navStep: 1
-			},
-			{
-				clsName: 'months',
-				navFnc: 'FullYear',
-				navStep: 1
-			},
-			{
-				clsName: 'years',
-				navFnc: 'FullYear',
-				navStep: 10
-		}],
-		isLeapYear: function (year) {
-			return (((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0));
-		},
-		getDaysInMonth: function (year, month) {
-			return [31, (DPGlobal.isLeapYear(year) ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
-		},
-		validParts: /dd?|DD?|mm?|MM?|yy(?:yy)?/g,
-		nonpunctuation: /[^ -\/:-@\[\u3400-\u9fff-`{-~\t\n\r]+/g,
-		parseFormat: function(format){
-			// IE treats \0 as a string end in inputs (truncating the value),
-			// so it's a bad format delimiter, anyway
-			var separators = format.replace(this.validParts, '\0').split('\0'),
-				parts = format.match(this.validParts);
-			if (!separators || !separators.length || !parts || parts.length === 0){
-				throw new Error("Invalid date format.");
-			}
-			return {separators: separators, parts: parts};
-		},
-		parseDate: function(date, format, language) {
-			if (date instanceof Date) return date;
-			if (typeof format === 'string')
-				format = DPGlobal.parseFormat(format);
-			if (/^[\-+]\d+[dmwy]([\s,]+[\-+]\d+[dmwy])*$/.test(date)) {
-				var part_re = /([\-+]\d+)([dmwy])/,
-					parts = date.match(/([\-+]\d+)([dmwy])/g),
-					part, dir;
-				date = new Date();
-				for (var i=0; i<parts.length; i++) {
-					part = part_re.exec(parts[i]);
-					dir = parseInt(part[1]);
-					switch(part[2]){
-						case 'd':
-							date.setUTCDate(date.getUTCDate() + dir);
-							break;
-						case 'm':
-							date = Datepicker.prototype.moveMonth.call(Datepicker.prototype, date, dir);
-							break;
-						case 'w':
-							date.setUTCDate(date.getUTCDate() + dir * 7);
-							break;
-						case 'y':
-							date = Datepicker.prototype.moveYear.call(Datepicker.prototype, date, dir);
-							break;
-					}
-				}
-				return UTCDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0);
-			}
-			var parts = date && date.match(this.nonpunctuation) || [],
-				date = new Date(),
-				parsed = {},
-				setters_order = ['yyyy', 'yy', 'M', 'MM', 'm', 'mm', 'd', 'dd'],
-				setters_map = {
-					yyyy: function(d,v){ return d.setUTCFullYear(v); },
-					yy: function(d,v){ return d.setUTCFullYear(2000+v); },
-					m: function(d,v){
-						v -= 1;
-						while (v<0) v += 12;
-						v %= 12;
-						d.setUTCMonth(v);
-						while (d.getUTCMonth() != v)
-							d.setUTCDate(d.getUTCDate()-1);
-						return d;
-					},
-					d: function(d,v){ return d.setUTCDate(v); }
-				},
-				val, filtered, part;
-			setters_map['M'] = setters_map['MM'] = setters_map['mm'] = setters_map['m'];
-			setters_map['dd'] = setters_map['d'];
-			date = UTCDate(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
-			var fparts = format.parts.slice();
-			// Remove noop parts
-			if (parts.length != fparts.length) {
-				fparts = $(fparts).filter(function(i,p){
-					return $.inArray(p, setters_order) !== -1;
-				}).toArray();
-			}
-			// Process remainder
-			if (parts.length == fparts.length) {
-				for (var i=0, cnt = fparts.length; i < cnt; i++) {
-					val = parseInt(parts[i], 10);
-					part = fparts[i];
-					if (isNaN(val)) {
-						switch(part) {
-							case 'MM':
-								filtered = $(dates[language].months).filter(function(){
-									var m = this.slice(0, parts[i].length),
-										p = parts[i].slice(0, m.length);
-									return m == p;
-								});
-								val = $.inArray(filtered[0], dates[language].months) + 1;
-								break;
-							case 'M':
-								filtered = $(dates[language].monthsShort).filter(function(){
-									var m = this.slice(0, parts[i].length),
-										p = parts[i].slice(0, m.length);
-									return m == p;
-								});
-								val = $.inArray(filtered[0], dates[language].monthsShort) + 1;
-								break;
-						}
-					}
-					parsed[part] = val;
-				}
-				for (var i=0, s; i<setters_order.length; i++){
-					s = setters_order[i];
-					if (s in parsed && !isNaN(parsed[s]))
-						setters_map[s](date, parsed[s]);
-				}
-			}
-			return date;
-		},
-		formatDate: function(date, format, language){
-			if (typeof format === 'string')
-				format = DPGlobal.parseFormat(format);
-			var val = {
-				d: date.getUTCDate(),
-				D: dates[language].daysShort[date.getUTCDay()],
-				DD: dates[language].days[date.getUTCDay()],
-				m: date.getUTCMonth() + 1,
-				M: dates[language].monthsShort[date.getUTCMonth()],
-				MM: dates[language].months[date.getUTCMonth()],
-				yy: date.getUTCFullYear().toString().substring(2),
-				yyyy: date.getUTCFullYear()
-			};
-			val.dd = (val.d < 10 ? '0' : '') + val.d;
-			val.mm = (val.m < 10 ? '0' : '') + val.m;
-			var date = [],
-				seps = $.extend([], format.separators);
-			for (var i=0, cnt = format.parts.length; i <= cnt; i++) {
-				if (seps.length)
-					date.push(seps.shift());
-				date.push(val[format.parts[i]]);
-			}
-			return date.join('');
-		},
-		headTemplate: '<thead>'+
-							'<tr>'+
-								'<th class="prev"><i class="icon-arrow-left"/></th>'+
-								'<th colspan="5" class="datepicker-switch"></th>'+
-								'<th class="next"><i class="icon-arrow-right"/></th>'+
-							'</tr>'+
-						'</thead>',
-		contTemplate: '<tbody><tr><td colspan="7"></td></tr></tbody>',
-		footTemplate: '<tfoot><tr><th colspan="7" class="today"></th></tr><tr><th colspan="7" class="clear"></th></tr></tfoot>'
-	};
-	DPGlobal.template = '<div class="datepicker">'+
-							'<div class="datepicker-days">'+
-								'<table class=" table-condensed">'+
-									DPGlobal.headTemplate+
-									'<tbody></tbody>'+
-									DPGlobal.footTemplate+
-								'</table>'+
-							'</div>'+
-							'<div class="datepicker-months">'+
-								'<table class="table-condensed">'+
-									DPGlobal.headTemplate+
-									DPGlobal.contTemplate+
-									DPGlobal.footTemplate+
-								'</table>'+
-							'</div>'+
-							'<div class="datepicker-years">'+
-								'<table class="table-condensed">'+
-									DPGlobal.headTemplate+
-									DPGlobal.contTemplate+
-									DPGlobal.footTemplate+
-								'</table>'+
-							'</div>'+
-						'</div>';
-
-	$.fn.datepicker.DPGlobal = DPGlobal;
-
-
-	/* DATEPICKER NO CONFLICT
-	* =================== */
-
-	$.fn.datepicker.noConflict = function(){
-		$.fn.datepicker = old;
-		return this;
-	};
-
-
-	/* DATEPICKER DATA-API
-	* ================== */
-
-	$(document).on(
-		'focus.datepicker.data-api click.datepicker.data-api',
-		'[data-provide="datepicker"]',
-		function(e){
-			var $this = $(this);
-			if ($this.data('datepicker')) return;
-			e.preventDefault();
-			// component click requires us to explicitly show it
-			datepicker.call($this, 'show');
-		}
-	);
-	$(function(){
-		//$('[data-provide="datepicker-inline"]').datepicker();
-        //vit: changed to support noConflict()
-        datepicker.call($('[data-provide="datepicker-inline"]'));
-	});
-
-}( window.jQuery ));
-
 /**
 Bootstrap-datepicker.  
 Description and examples: https://github.com/eternicode/bootstrap-datepicker.  
@@ -6114,21 +4896,17 @@ $(function(){
         format: 'yyyy-mm-dd',    
         viewformat: 'dd/mm/yyyy',    
         datepicker: {
-                weekStart: 1
            }
         }
     });
 });
 </script>
 **/
+/*global moment*/
 (function ($) {
     "use strict";
     
     //store bootstrap-datepicker as bdateicker to exclude conflict with jQuery UI one
-    $.fn.bdatepicker = $.fn.datepicker.noConflict();
-    if(!$.fn.datepicker) { //if there were no other datepickers, keep also original name
-        $.fn.datepicker = $.fn.bdatepicker;    
-    }    
     
     var Date = function (options) {
         this.init('date', options, Date.defaults);
@@ -6148,7 +4926,7 @@ $(function(){
             
             //try parse datepicker config defined as json string in data-datepicker
             options.datepicker = $.fn.editableutils.tryParseJson(options.datepicker, true);
-            
+
             //overriding datepicker config (as by default jQuery extend() is not recursive)
             //since 1.4 datepicker internally uses viewformat instead of format. Format is for submit only
             this.options.datepicker = $.extend({}, defaults.datepicker, options.datepicker, {
@@ -6156,19 +4934,31 @@ $(function(){
             });
             
             //language
-            this.options.datepicker.language = this.options.datepicker.language || 'en'; 
+            this.options.datepicker.locale = this.options.datepicker.locale || moment.locale(); 
 
-            //store DPglobal
-            this.dpg = $.fn.bdatepicker.DPGlobal; 
-
-            //store parsed formats
-            this.parsedFormat = this.dpg.parseFormat(this.options.format);
-            this.parsedViewFormat = this.dpg.parseFormat(this.options.viewformat);            
+            this.dpg = {
+                parseDate: function (txt, fmt) {
+                    return moment(txt, fmt, true);
+                },
+                formatDate: function (x, fmt) {
+                    return x.format(fmt);
+                }
+            };
         },
         
         render: function () {
-            this.$input.bdatepicker(this.options.datepicker);
+            this.$input.datetimepicker(this.options.datepicker);
             
+            //adjust container position when viewMode changes
+            //see https://github.com/smalot/bootstrap-datetimepicker/pull/80
+            this.$input.on('changeMode', function(e) {
+                var f = $(this).closest('form').parent();
+                //timeout here, otherwise container changes position before form has new size
+                setTimeout(function(){
+                    f.triggerHandler('resize');
+                }, 0);
+            });
+
             //"clear" link
             if(this.options.clear) {
                 this.$clear = $('<a href="#"></a>').html(this.options.clear).click($.proxy(function(e){
@@ -6182,20 +4972,24 @@ $(function(){
         },
         
         value2html: function(value, element) {
-           var text = value ? this.dpg.formatDate(value, this.parsedViewFormat, this.options.datepicker.language) : '';
-           Date.superclass.value2html.call(this, text, element); 
+            var text = value ? this.dpg.formatDate(value, this.options.viewformat, this.options.datepicker.locale, this.options.formatType) : '';
+            if(element) {
+                Date.superclass.value2html.call(this, text, element);
+            } else {
+                return text;
+            }
         },
 
         html2value: function(html) {
-            return this.parseDate(html, this.parsedViewFormat);
+            return this.parseDate(html, this.options.viewformat); 
         },   
 
         value2str: function(value) {
-            return value ? this.dpg.formatDate(value, this.parsedFormat, this.options.datepicker.language) : '';
+            return value ? this.dpg.formatDate(value, this.options.format, this.options.datepicker.locale, this.options.formatType) : '';
         }, 
 
         str2value: function(str) {
-            return this.parseDate(str, this.parsedFormat);
+            return this.parseDate(str, this.options.format);
         }, 
 
         value2submit: function(value) {
@@ -6203,18 +4997,22 @@ $(function(){
         },                    
 
         value2input: function(value) {
-            this.$input.bdatepicker('update', value);
+            if(value) {
+                this.$input.data('DateTimePicker').date(value);
+            }
         },
 
         input2value: function() { 
-            return this.$input.data('datepicker').date;
+            //date may be cleared, in that case getDate() triggers error
+            var dt = this.$input.data('DateTimePicker');
+            return dt.date ? dt.date() : null;
         },       
 
         activate: function() {
         },
 
         clear:  function() {
-            this.$input.data('datepicker').date = null;
+            this.$input.data('DateTimePicker').date = null;
             this.$input.find('.active').removeClass('active');
             if(!this.options.showbuttons) {
                 this.$input.closest('form').submit(); 
@@ -6250,9 +5048,9 @@ $(function(){
        parseDate: function(str, format) {
            var date = null, formattedBack;
            if(str) {
-               date = this.dpg.parseDate(str, format, this.options.datepicker.language);
+                date = this.dpg.parseDate(str, format, this.options.datepicker.locale, this.options.formatType);
                if(typeof str === 'string') {
-                   formattedBack = this.dpg.formatDate(date, format, this.options.datepicker.language);
+                    formattedBack = this.dpg.formatDate(date, format, this.options.datepicker.locale, this.options.formatType);
                    if(str !== formattedBack) {
                        date = null;
                    }
@@ -6276,13 +5074,13 @@ $(function(){
         inputclass: null,
         /**
         Format used for sending value to server. Also applied when converting date from <code>data-value</code> attribute.<br>
-        Possible tokens are: <code>d, dd, m, mm, yy, yyyy</code>  
+        See MomentJs for possible formatting tokens.
 
         @property format 
         @type string
-        @default yyyy-mm-dd
+        @default YYYY-MM-DD
         **/
-        format:'yyyy-mm-dd',
+        format:'YYYY-MM-DD',
         /**
         Format used for displaying date. Also applied when converting date from element's text on init.   
         If not specified equals to <code>format</code>
@@ -6294,22 +5092,20 @@ $(function(){
         viewformat: null,
         /**
         Configuration of datepicker.
-        Full list of options: http://bootstrap-datepicker.readthedocs.org/en/latest/options.html
+        Full list of options: https://getdatepicker.com/4/Options/
 
         @property datepicker 
         @type object
         @default {
-            weekStart: 0,
             startView: 0,
             minViewMode: 0,
-            autoclose: false
+            autoclose: false,
+            pickTime: false
         }
         **/
         datepicker:{
-            weekStart: 0,
-            startView: 0,
-            minViewMode: 0,
-            autoclose: false
+            format: 'L',
+            inline: true,
         },
         /**
         Text shown as clear date button. 
@@ -6352,8 +5148,7 @@ Automatically shown in inline mode.
             this.setClass();
             this.setAttr('placeholder');
 
-            //bootstrap-datepicker is set `bdateicker` to exclude conflict with jQuery UI one. (in date.js)
-            this.$input.bdatepicker(this.options.datepicker);
+            this.$tpl.datetimepicker(this.options.datepicker);
 
             //need to disable original event handlers
             this.$input.off('focus keydown');
@@ -6361,14 +5156,17 @@ Automatically shown in inline mode.
             //update value of datepicker
             this.$input.keyup($.proxy(function(){
                this.$tpl.removeData('date');
-               this.$tpl.bdatepicker('update');
+               this.$tpl.data('DateTimePicker').date(this.$input.val());
             }, this));
 
         },
 
        value2input: function(value) {
-           this.$input.val(value ? this.dpg.formatDate(value, this.parsedViewFormat, this.options.datepicker.language) : '');
-           this.$tpl.bdatepicker('update');
+           this.$input.val(this.value2html(value));
+           //this.$tpl.datetimepicker('update');
+           if(value) {
+               this.$tpl.data('DateTimePicker').date(value);
+           }
        },
 
        input2value: function() {
@@ -6376,7 +5174,8 @@ Automatically shown in inline mode.
        },
 
        activate: function() {
-           $.fn.editabletypes.text.prototype.activate.call(this);
+            //this.$input.data('DateTimePicker').show();
+            $.fn.editabletypes.text.prototype.activate.call(this);
        },
 
        autosubmit: function() {
@@ -6388,19 +5187,16 @@ Automatically shown in inline mode.
         /**
         @property tpl
         **/
-        tpl:'<div class="input-append date"><input type="text"/><span class="add-on"><i class="icon-th"></i></span></div>',
+        tpl:'<div class="input-group date" style="position: relative"><input type="text"/><span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span></div>',
         /**
         @property inputclass
-        @default 'input-small'
+        @default null
         **/
-        inputclass: 'input-small',
+        inputclass: null,
 
         /* datepicker config */
         datepicker: {
-            weekStart: 0,
-            startView: 0,
-            minViewMode: 0,
-            autoclose: true
+            format: 'L',
         }
     });
 
@@ -6410,13 +5206,13 @@ Automatically shown in inline mode.
 
 /**
 Bootstrap-datetimepicker.  
-Based on [smalot bootstrap-datetimepicker plugin](https://github.com/smalot/bootstrap-datetimepicker). 
+Based on [Eonasdan bootstrap-datetimepicker plugin](https://github.com/Eonasdan/bootstrap-datetimepicker/). 
 Before usage you should manually include dependent js and css:
 
-    <link href="css/datetimepicker.css" rel="stylesheet" type="text/css"></link> 
+    <link href="css/bootstrap-datetimepicker.css" rel="stylesheet" type="text/css"></link> 
     <script src="js/bootstrap-datetimepicker.js"></script>
 
-For **i18n** you should include js file from here: https://github.com/smalot/bootstrap-datetimepicker/tree/master/js/locales
+For **i18n** you should include js file from here: https://github.com/Eonasdan/bootstrap-datetimepicker/tree/master/js/locales
 and set `language` option.  
 
 @class datetime
@@ -6428,16 +5224,18 @@ and set `language` option.
 <script>
 $(function(){
     $('#last_seen').editable({
-        format: 'yyyy-mm-dd hh:ii',    
-        viewformat: 'dd/mm/yyyy hh:ii',    
+        format: 'YYYY-MM-DD HH:mm',    
+        viewformat: 'DD/MM/YYYY HH:mm',    
         datetimepicker: {
-                weekStart: 1
            }
         }
     });
 });
 </script>
 **/
+
+/*global moment*/
+
 (function ($) {
     "use strict";
 
@@ -6467,14 +5265,16 @@ $(function(){
             });
 
             //language
-            this.options.datetimepicker.language = this.options.datetimepicker.language || 'en'; 
+            this.options.datetimepicker.locale = this.options.datetimepicker.locale || moment.locale(); 
 
-            //store DPglobal
-            this.dpg = $.fn.datetimepicker.DPGlobal; 
-
-            //store parsed formats
-            this.parsedFormat = this.dpg.parseFormat(this.options.format, this.options.formatType);
-            this.parsedViewFormat = this.dpg.parseFormat(this.options.viewformat, this.options.formatType);
+            this.dpg = {
+                parseDate: function (txt, fmt) {
+                    return moment(txt, fmt, true);
+                },
+                formatDate: function (x, fmt) {
+                    return x.format(fmt);
+                }
+            };
         },
 
         render: function () {
@@ -6503,8 +5303,7 @@ $(function(){
         },
 
         value2html: function(value, element) {
-            //formatDate works with UTCDate!
-            var text = value ? this.dpg.formatDate(this.toUTC(value), this.parsedViewFormat, this.options.datetimepicker.language, this.options.formatType) : '';
+            var text = value ? this.dpg.formatDate(value, this.options.viewformat, this.options.datetimepicker.locale, this.options.formatType) : '';
             if(element) {
                 DateTime.superclass.value2html.call(this, text, element);
             } else {
@@ -6513,86 +5312,81 @@ $(function(){
         },
 
         html2value: function(html) {
-            //parseDate return utc date!
-            var value = this.parseDate(html, this.parsedViewFormat); 
-            return value ? this.fromUTC(value) : null;
+            return this.parseDate(html, this.options.viewformat); 
         },
 
         value2str: function(value) {
-            //formatDate works with UTCDate!
-            return value ? this.dpg.formatDate(this.toUTC(value), this.parsedFormat, this.options.datetimepicker.language, this.options.formatType) : '';
-       },
+            return value ? this.dpg.formatDate(value, this.options.format, this.options.datetimepicker.locale, this.options.formatType) : '';
+        },
 
-       str2value: function(str) {
-           //parseDate return utc date!
-           var value = this.parseDate(str, this.parsedFormat);
-           return value ? this.fromUTC(value) : null;
-       },
+        str2value: function(str) {
+            return this.parseDate(str, this.options.format);
+        },
 
-       value2submit: function(value) {
-           return this.value2str(value);
-       },
+        value2submit: function(value) {
+            return this.value2str(value);
+        },
 
-       value2input: function(value) {
-           if(value) {
-             this.$input.data('datetimepicker').setDate(value);
-           }
-       },
+        value2input: function(value) {
+            if(value) {
+                this.$input.data('DateTimePicker').date(value);
+            }
+        },
 
-       input2value: function() { 
-           //date may be cleared, in that case getDate() triggers error
-           var dt = this.$input.data('datetimepicker');
-           return dt.date ? dt.getDate() : null;
-       },
+        input2value: function() { 
+            //date may be cleared, in that case getDate() triggers error
+            var dt = this.$input.data('DateTimePicker');
+            return dt.date ? dt.date() : null;
+        },
 
-       activate: function() {
-       },
+        activate: function() {
+        },
+ 
+        clear: function() {
+            this.$input.data('DateTimePicker').date = null;
+            this.$input.find('.active').removeClass('active');
+            if(!this.options.showbuttons) {
+                this.$input.closest('form').submit(); 
+            }          
+        },
 
-       clear: function() {
-          this.$input.data('datetimepicker').date = null;
-          this.$input.find('.active').removeClass('active');
-          if(!this.options.showbuttons) {
-             this.$input.closest('form').submit(); 
-          }          
-       },
-
-       autosubmit: function() {
-           this.$input.on('mouseup', '.minute', function(e){
-               var $form = $(this).closest('form');
-               setTimeout(function() {
-                   $form.submit();
-               }, 200);
-           });
-       },
-
-       //convert date from local to utc
-       toUTC: function(value) {
-         return value ? new Date(value.valueOf() - value.getTimezoneOffset() * 60000) : value;  
-       },
-
-       //convert date from utc to local
-       fromUTC: function(value) {
-         return value ? new Date(value.valueOf() + value.getTimezoneOffset() * 60000) : value;  
-       },
-
-       /*
-        For incorrect date bootstrap-datetimepicker returns current date that is not suitable
-        for datetimefield.
-        This function returns null for incorrect date.  
-       */
-       parseDate: function(str, format) {
-           var date = null, formattedBack;
-           if(str) {
-               date = this.dpg.parseDate(str, format, this.options.datetimepicker.language, this.options.formatType);
-               if(typeof str === 'string') {
-                   formattedBack = this.dpg.formatDate(date, format, this.options.datetimepicker.language, this.options.formatType);
-                   if(str !== formattedBack) {
-                       date = null;
-                   } 
-               }
-           }
-           return date;
-       }
+        autosubmit: function() {
+            this.$input.on('mouseup', '.minute', function(e){
+                var $form = $(this).closest('form');
+                setTimeout(function() {
+                    $form.submit();
+                }, 200);
+            });
+        },
+ 
+        //convert date from local to utc
+        toUTC: function(value) {
+            return value ? new Date(value.valueOf() + value.utcOffset() * 60000) : value;  
+        },
+ 
+        //convert date from utc to local
+        fromUTC: function(value) {
+            return value ? new Date(value.valueOf() - value.utcOffset() * 60000) : value;  
+        },
+ 
+        /*
+         For incorrect date bootstrap-datetimepicker returns current date that is not suitable
+         for datetimefield.
+         This function returns null for incorrect date.  
+        */
+        parseDate: function(str, format) {
+            var date = null, formattedBack;
+            if(str) {
+                date = this.dpg.parseDate(str, format, this.options.datetimepicker.locale, this.options.formatType);
+                if(typeof str === 'string') {
+                    formattedBack = this.dpg.formatDate(date, format, this.options.datetimepicker.locale, this.options.formatType);
+                    if(str !== formattedBack) {
+                        date = null;
+                    } 
+                }
+            }
+            return date;
+        }
 
     });
 
@@ -6601,7 +5395,9 @@ $(function(){
         @property tpl 
         @default <div></div>
         **/         
-        tpl:'<div class="editable-date well"></div>',
+        //tpl:'<div class="editable-date well"></div>',
+        tpl:'<div class="input-append date"><input type="text"/></div>',
+
         /**
         @property inputclass 
         @default null
@@ -6609,13 +5405,13 @@ $(function(){
         inputclass: null,
         /**
         Format used for sending value to server. Also applied when converting date from <code>data-value</code> attribute.<br>
-        Possible tokens are: <code>d, dd, m, mm, yy, yyyy, h, i</code>  
+        See documentation for MomentJs for possible formatting tokens. 
         
         @property format 
         @type string
-        @default yyyy-mm-dd hh:ii
+        @default YYYY-MM-DD HH:mm
         **/         
-        format:'yyyy-mm-dd hh:ii',
+        format:'YYYY-MM-DD HH:mm',
         formatType:'standard',
         /**
         Format used for displaying date. Also applied when converting date from element's text on init.   
@@ -6628,15 +5424,14 @@ $(function(){
         viewformat: null,
         /**
         Configuration of datetimepicker.
-        Full list of options: https://github.com/smalot/bootstrap-datetimepicker
+        Full list of options: https://github.com/Eonasdan/bootstrap-datetimepicker
 
         @property datetimepicker 
         @type object
         @default { }
         **/
         datetimepicker:{
-            todayHighlight: false,
-            autoclose: false
+            inline: true,
         },
         /**
         Text shown as clear date button. 
@@ -6676,23 +5471,25 @@ Automatically shown in inline mode.
             this.$input = this.$tpl.find('input');
             this.setClass();
             this.setAttr('placeholder');
-            
+
             this.$tpl.datetimepicker(this.options.datetimepicker);
-            
+
             //need to disable original event handlers
             this.$input.off('focus keydown');
             
             //update value of datepicker
             this.$input.keyup($.proxy(function(){
                this.$tpl.removeData('date');
-               this.$tpl.datetimepicker('update');
+               this.$tpl.data('DateTimePicker').date(this.$input.val());
             }, this));
             
         },   
       
        value2input: function(value) {
            this.$input.val(this.value2html(value));
-           this.$tpl.datetimepicker('update');
+           if(value) {
+               this.$tpl.data('DateTimePicker').date(value);
+           }
        },
         
        input2value: function() { 
@@ -6712,17 +5509,16 @@ Automatically shown in inline mode.
         /**
         @property tpl 
         **/         
-        tpl:'<div class="input-append date"><input type="text"/><span class="add-on"><i class="icon-th"></i></span></div>',
+        tpl:'<div class="input-group date" style="position: relative"><input type="text"/><span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span></div>',
         /**
         @property inputclass 
-        @default 'input-medium'
+        @default null
         **/         
-        inputclass: 'input-medium',
+        inputclass: null,
         
         /* datetimepicker config */
         datetimepicker:{
-            todayHighlight: false,
-            autoclose: true
+            format: 'L LT',
         }
     });
     

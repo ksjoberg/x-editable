@@ -23,13 +23,12 @@ define(function () {
             var 
                 jqueryui_ver = '1.10.3',
             //    jqueryui_ver = '1.9.1',
-                bs2_ver = '232',
                 bs3_ver = '300',
                 bs4_ver = '400',
                 bs5_ver = '500',
                 //path aliases
                 paths = {
-                    "bootstrap": "../test/libs/bootstrap"+({'bootstrap2': bs2_ver, 'bootstrap3': bs3_ver, 'bootstrap4': bs4_ver, 'bootstrap5': bs5_ver}[f]), 
+                    "bootstrap": "../test/libs/bootstrap"+({'bootstrap3': bs3_ver, 'bootstrap4': bs4_ver, 'bootstrap5': bs5_ver}[f]), 
                     
                   //  "jqueryui": "../test/libs/jquery-ui-"+jqueryui_ver+".custom", 
                     "jqueryui_js": "../test/libs/jquery-ui-"+jqueryui_ver+".custom/js/jquery-ui-"+jqueryui_ver+".custom", 
@@ -37,6 +36,7 @@ define(function () {
                     "dateui_js": "inputs/dateui/jquery-ui-datepicker/js/jquery-ui-"+jqueryui_ver+".custom",
                     
                     "poshytip": "../test/libs/poshytip",
+                    "moment": "../test/libs/moment/moment",
 
                     "test": "../test" 
                 },          
@@ -82,7 +82,7 @@ define(function () {
                 'inputs/textarea': ['inputs/abstract'],
                 'inputs/abstract': ['editable-form/editable-form-utils'],   
                 'inputs/html5types': ['inputs/text'], 
-                'inputs/combodate/combodate': ['inputs/abstract', 'inputs/combodate/lib/combodate', 'inputs/combodate/lib/moment.min'],
+                'inputs/combodate/combodate': ['inputs/abstract', 'inputs/combodate/lib/combodate'/*, 'moment'*/],
                 //moment 1.7.2
                 //'inputs/combodate/combodate': ['inputs/abstract', 'inputs/combodate/lib/combodate', 'inputs/combodate/lib/moment.min.1.7.2'],
                 'inputs/typeahead': ['inputs/list'],  
@@ -137,18 +137,20 @@ define(function () {
                     deps: ['require', 
                     'bootstrap/js/bootstrap',
                     'inputs/abstract', 
-                    'inputs/date/bootstrap-datepicker/js/bootstrap-datepicker'],
+                    'inputs/datetime/bootstrap-datetimepicker/js/bootstrap-datetimepicker',
+                    'moment'],
                     init: function(require) {
-                        loadCss(require.toUrl("./bootstrap-datepicker/css/datepicker.css")); 
+                        loadCss(require.toUrl("../datetime/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css"));
                     }
                 },
                 'inputs/datetime/datetime': {
                     deps: ['require', 
                     'bootstrap/js/bootstrap',
                     'inputs/abstract', 
-                    'inputs/datetime/bootstrap-datetimepicker/js/bootstrap-datetimepicker'],
+                    'inputs/datetime/bootstrap-datetimepicker/js/bootstrap-datetimepicker',
+                    'moment'],
                     init: function(require) {
-                        loadCss(require.toUrl("./bootstrap-datetimepicker/css/datetimepicker.css")); 
+                        loadCss(require.toUrl("./bootstrap-datetimepicker/css/bootstrap-datetimepicker.css")); 
                     }
                 },
 
@@ -170,10 +172,10 @@ define(function () {
                 //select2
                 'inputs/select2/select2': {
                     deps: ['require', 
-                    'inputs/select2/lib/select2',
+                    'inputs/select2/lib/js/select2',
                     'inputs/abstract'], 
                     init: function(require) {
-                        loadCss(require.toUrl("./lib/select2.css")); 
+                        loadCss(require.toUrl("./lib/css/select2.css")); 
                         if (f === 'bootstrap2' || f === 'bootstrap3' || f === 'bootstrap4' || f === 'bootstrap5') {
                             loadCss(require.toUrl("./lib/select2-bootstrap.css"));
                         } 
@@ -326,7 +328,21 @@ define(function () {
             return {
                 baseUrl: baseUrl,
                 paths: paths,
-                shim: shim
+                shim: shim,
+                map: {
+                    // For all modules, if they ask for 'moment', use 'moment-adapter'
+                    '*': {
+                        'moment': 'moment-adapter'
+                    },
+                    // However, for moment-adapter, and moment/ modules, give them the
+                    // real 'moment*' modules.
+                    'moment-adapter': {
+                        'moment': 'moment'
+                    },
+                    'moment': {
+                        'moment': 'moment'
+                    },
+                }
             };  
         },
 
@@ -343,7 +359,7 @@ define(function () {
             } else if(url.match(/f=bootstrap3/i) || url.match(/f=bs3/i)) {      
                 f = 'bootstrap3';
             } else {      
-                f = 'bootstrap2';
+                f = 'bootstrap3';
             }
             c = url.match(/c=inline/i) ? 'inline' : 'popup';
             return {f: f, c: c};
