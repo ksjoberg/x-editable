@@ -123,13 +123,13 @@ $(function(){
 
         value2input: function(value) {
             if(value) {
-                this.$input.data('DateTimePicker').date(value);
+                this.$input.data('datetimepicker').date(value);
             }
         },
 
         input2value: function() { 
             //date may be cleared, in that case getDate() triggers error
-            var dt = this.$input.data('DateTimePicker');
+            var dt = this.$input.data('datetimepicker');
             return dt.date ? dt.date() : null;
         },
 
@@ -137,7 +137,7 @@ $(function(){
         },
  
         clear: function() {
-            this.$input.data('DateTimePicker').date = null;
+            this.$input.data('datetimepicker').date = null;
             this.$input.find('.active').removeClass('active');
             if(!this.options.showbuttons) {
                 this.$input.closest('form').submit(); 
@@ -190,7 +190,7 @@ $(function(){
         @default <div></div>
         **/         
         //tpl:'<div class="editable-date well"></div>',
-        tpl:'<div class="input-append date"><input type="text"/></div>',
+        tpl:'<div class="input-append date" data-target-input="nearest" style="position: relative"><input type="text"/></div>',
 
         /**
         @property inputclass 

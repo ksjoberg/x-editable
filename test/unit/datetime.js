@@ -56,8 +56,7 @@ define(["jquery", "moment"], function ($, moment) {
             p.find('.day.active').next().click();
 
             //switch to timepicker
-            p.find('.picker-switch a').click();
-
+            p.find('.picker-switch a[data-action=togglePicker]').click();
             
             //hours appeared?
             ok(p.find('.timepicker-hour').is(':visible'), 'datetimepicker hours visible');

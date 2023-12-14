@@ -49,7 +49,10 @@
         
         /* destroy */
         innerDestroy: function() {
-            this.call('dispose');
+            var me = this;
+            setTimeout(function() {
+                me.call('dispose');
+            }, 300);
         },
         
         setContainerOption: function(key, value) {

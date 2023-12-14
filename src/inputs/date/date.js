@@ -118,13 +118,13 @@ $(function(){
 
         value2input: function(value) {
             if(value) {
-                this.$input.data('DateTimePicker').date(value);
+                this.$input.data('datetimepicker').date(value);
             }
         },
 
         input2value: function() { 
             //date may be cleared, in that case getDate() triggers error
-            var dt = this.$input.data('DateTimePicker');
+            var dt = this.$input.data('datetimepicker');
             return dt.date ? dt.date() : null;
         },       
 
@@ -132,7 +132,7 @@ $(function(){
         },
 
         clear:  function() {
-            this.$input.data('DateTimePicker').date = null;
+            this.$input.data('datetimepicker').date = null;
             this.$input.find('.active').removeClass('active');
             if(!this.options.showbuttons) {
                 this.$input.closest('form').submit(); 

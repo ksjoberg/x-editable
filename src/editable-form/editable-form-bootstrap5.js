@@ -11,22 +11,22 @@ Editableform based on Twitter Bootstrap 5
         initTemplate: function() {
             this.$form = $($.fn.editableform.template); 
             this.$form.find('.control-group').addClass('form-group');
-            this.$form.find('.editable-error-block').addClass('help-block');
+            this.$form.find('.editable-error-block').addClass('invalid-feedback');
         },
         initInput: function() {  
             pInitInput.apply(this);
 
             //for bs5 set default class `form-control` to standard inputs
             var emptyInputClass = this.input.options.inputclass === null || this.input.options.inputclass === false;
-            var defaultClass = 'form-control-sm';
+            var defaultClass = 'form-control';
             
             //bs3 add `form-control` class to standard inputs
-            var stdtypes = 'text,select,textarea,password,email,url,tel,number,range,time,typeaheadjs'.split(','); 
+            var stdtypes = 'text,select,datetimefield,textarea,password,email,url,tel,number,range,time,typeaheadjs'.split(','); 
             if(~$.inArray(this.input.type, stdtypes)) {
-                this.input.$input.addClass('form-control');
+                //this.input.$input.addClass('form-control');
                 if(emptyInputClass) {
                     this.input.options.inputclass = defaultClass;
-                    this.input.$input.addClass(defaultClass);
+                    //this.input.$input.addClass(defaultClass);
                 }
             }             
         
@@ -57,8 +57,10 @@ Editableform based on Twitter Bootstrap 5
       '</button>';         
     
     //error classes
-    $.fn.editableform.errorGroupClass = 'has-error';
-    $.fn.editableform.errorBlockClass = null;  
+    $.fn.editableform.errorGroupClass = null;
+    $.fn.editableform.errorBlockClass = null;
+    $.fn.editableform.errorControlClass = 'is-invalid';
+
     //engine
     $.fn.editableform.engine = 'bs5';  
 }(window.jQuery));

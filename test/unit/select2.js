@@ -275,54 +275,57 @@ $(function () {
         
         e.click();
         var p = tip(e);
-        
-        ok(p.is(':visible'), 'popover visible');
-        equal(p.find('.select2-selection span').text(), text, 'selected text correct');
-      
-        var $input = p.find('select');
-        ok($input.length, 'input exists');
-        ok($input.select2, 'select2 applied');      
-        equal($input.val(), e.data('editable').value, 'selected value correct');   
-        
-        //click to load items
-        $input.select2('open');
-        //p.find('.select2-selection').mousedown();
-        
         setTimeout(function() {
-           equal($('.select2-results li').length, groupsArr2.length, 'items loaded');
-           equal($('.select2-results > ul > li.select2-results__option--highlighted').text(), text, 'highlight ok');
-       
-           //select new value (0)
-           $('.select2-results li').eq(newVal).mouseup();
-           equal(p.find('.select2-selection span').text(), newText, 'new selected text ok');
-                       
-           //submit
-           p.find('form').submit();
+            ok(p.is(':visible'), 'popover visible');
+            equal(p.find('.select2-selection span').text(), text, 'selected text correct');
+          
+            var $input = p.find('select');
+            ok($input.length, 'input exists');
+            ok($input.select2, 'select2 applied');      
+            equal($input.val(), e.data('editable').value, 'selected value correct');   
+            
+            //click to load items
+            $input.select2('open');
+            //p.find('.select2-selection').mousedown();
+            
+            setTimeout(function() {
+               equal($('.select2-results li').length, groupsArr2.length, 'items loaded');
+               equal($('.select2-results > ul > li.select2-results__option--highlighted').text(), text, 'highlight ok');
            
-           setTimeout(function() {
-               ok(!p.is(':visible'), 'popover closed');
-               equal(e.data('editable').value, newVal, 'new value ok');
-               equal(e.text(), newText, 'new text ok');             
+               //select new value (0)
+               $('.select2-results li').eq(newVal).mouseup();
+               equal(p.find('.select2-selection span').text(), newText, 'new selected text ok');
+                           
+               //submit
+               p.find('form').submit();
+               
+                setTimeout(function() {
+                    ok(!p.is(':visible'), 'popover closed');
+                    equal(e.data('editable').value, newVal, 'new value ok');
+                    equal(e.text(), newText, 'new text ok');             
 
-               //open again
-               e.click();
-               p = tip(e);
-               equal(p.find('.select2-selection span').text(), newText, 'text ok on second open');
-               equal($input.val(), newVal, 'selected value ok on second open');                
-               
-               //setValue in closed state
-               // p.find('.editable-cancel').click();
-               // e.editable('setValue', 1);
-               // equal(e.data('editable').value, 1, 'setValue: value ok');
-               // equal(e.text(), groups[1], 'setValue: text ok');               
-               
-               e.remove();
-               start();
-           }, timeout);
-        }, timeout);             
+                    //open again
+                    e.click();
+                    p = tip(e);
+                    setTimeout(function() {
+                        equal(p.find('.select2-selection span').text(), newText, 'text ok on second open');
+                        equal($input.val(), newVal, 'selected value ok on second open');                
+
+                        //setValue in closed state
+                        // p.find('.editable-cancel').click();
+                        // e.editable('setValue', 1);
+                        // equal(e.data('editable').value, 1, 'setValue: value ok');
+                        // equal(e.text(), groups[1], 'setValue: text ok');               
+
+                        e.remove();
+                        start();
+                    }, timeout);
+                }, timeout);
+            }, timeout);
+        }, timeout);
      });  
      
-    test("remote: initially empty", function () {
+    asyncTest("remote: initially empty", function () {
         var s = 2, text = groups[s],
             newVal = 0, newText = groups[newVal],
             e = $('<a href="#" data-type="select2" data-name="select2"></a>').appendTo(sfx).editable({
@@ -334,9 +337,11 @@ $(function () {
             
         e.click();
         var p = tip(e);
-        
-        ok(p.is(':visible'), 'popover visible');
-        equal(p.find('.select2-selection span span').text(), 'placeholder', 'placeholder shown in select2');            
+        setTimeout(function() {
+            ok(p.is(':visible'), 'popover visible');
+            equal(p.find('.select2-selection span span').text(), 'placeholder', 'placeholder shown in select2');            
+            start();
+        }, timeout);
     });      
     
     asyncTest("remote: custom id, custom text, dataAdapter (not multiple)", function () {

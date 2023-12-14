@@ -173,11 +173,13 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
         error: function(msg) {
             var $group = this.$form.find('.control-group'),
                 $block = this.$form.find('.editable-error-block'),
+                $control = this.$form.find('input'),
                 lines;
 
             if(msg === false) {
                 $group.removeClass($.fn.editableform.errorGroupClass);
                 $block.removeClass($.fn.editableform.errorBlockClass).empty().hide(); 
+                $control.removeClass($.fn.editableform.errorControlClass);
             } else {
                 //convert newline to <br> for more pretty error display
                 if(msg) {
@@ -189,6 +191,7 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
                 }
                 $group.addClass($.fn.editableform.errorGroupClass);
                 $block.addClass($.fn.editableform.errorBlockClass).html(msg).show();
+                $control.addClass($.fn.editableform.errorControlClass);
             }
         },
 
@@ -288,7 +291,7 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
                 if(typeof this.options.error === 'function') {
                     msg = this.options.error.call(this.options.scope, xhr, newValue);
                 } else {
-                    msg = typeof xhr === 'string' ? xhr : xhr.responseText || xhr.statusText || 'Unknown error!';
+                    msg = typeof xhr === 'string' ? xhr : xhr.responseJSON || xhr.responseText || xhr.statusText || 'Unknown error!';
                 }
 
                 this.error(msg);
@@ -613,7 +616,7 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
     */      
     $.fn.editableform.template = '<form class="form-inline editableform">'+
     '<div class="control-group">' + 
-    '<div><div class="editable-input"></div><div class="editable-buttons"></div></div>'+
+    '<div style="display: flex"><div class="editable-input"></div><div class="editable-buttons"></div></div>'+
     '<div class="editable-error-block"></div>' + 
     '</div>' + 
     '</form>';
@@ -630,6 +633,9 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
 
     //error class attached to editable-error-block
     $.fn.editableform.errorBlockClass = 'editable-error';
+
+    //error class attached to input
+    $.fn.editableform.errorControlClass = null;
     
     //engine
     $.fn.editableform.engine = 'jquery';

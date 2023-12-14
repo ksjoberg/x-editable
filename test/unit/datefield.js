@@ -48,7 +48,7 @@ define(["jquery", "moment"], function ($, moment) {
         equal(p.find('input').val(), d, 'date set correct');
         
         //open picker
-        p.find('span.input-group-addon').click();
+        //p.find('span.input-group-addon').click();
         var picker = p.find('.bootstrap-datetimepicker-widget');
 
         ok(picker.is(':visible'), 'picker shown');

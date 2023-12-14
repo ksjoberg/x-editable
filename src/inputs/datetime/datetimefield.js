@@ -22,6 +22,13 @@ Automatically shown in inline mode.
             this.$input = this.$tpl.find('input');
             this.setClass();
             this.setAttr('placeholder');
+            if(this.options.clear) {
+                if (!this.options.datetimepicker.buttons)
+                {
+                    this.options.datetimepicker.buttons = {};
+                }
+                this.options.datetimepicker.buttons.showClear = true;
+            }
 
             this.$tpl.datetimepicker(this.options.datetimepicker);
 
@@ -31,7 +38,7 @@ Automatically shown in inline mode.
             //update value of datepicker
             this.$input.keyup($.proxy(function(){
                this.$tpl.removeData('date');
-               this.$tpl.data('DateTimePicker').date(this.$input.val());
+               this.$tpl.data('datetimepicker').date(this.$input.val());
             }, this));
             
         },   
@@ -39,7 +46,7 @@ Automatically shown in inline mode.
        value2input: function(value) {
            this.$input.val(this.value2html(value));
            if(value) {
-               this.$tpl.data('DateTimePicker').date(value);
+               this.$tpl.data('datetimepicker').date(value);
            }
        },
         
@@ -49,6 +56,7 @@ Automatically shown in inline mode.
         
        activate: function() {
            $.fn.editabletypes.text.prototype.activate.call(this);
+           this.$tpl.datetimepicker('show');
        },
        
        autosubmit: function() {
@@ -60,7 +68,7 @@ Automatically shown in inline mode.
         /**
         @property tpl 
         **/         
-        tpl:'<div class="input-group date" style="position: relative"><input type="text"/><span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span></div>',
+        tpl:'<div class="input-group date" data-target-input="nearest"><input type="text"/></div>',
         /**
         @property inputclass 
         @default null
@@ -70,7 +78,7 @@ Automatically shown in inline mode.
         /* datetimepicker config */
         datetimepicker:{
             format: 'L LT',
-        }
+        },
     });
     
     $.fn.editabletypes.datetimefield = DateTimeField;

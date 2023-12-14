@@ -32,7 +32,7 @@ Automatically shown in inline mode.
             //update value of datepicker
             this.$input.keyup($.proxy(function(){
                this.$tpl.removeData('date');
-               this.$tpl.data('DateTimePicker').date(this.$input.val());
+               this.$tpl.data('datetimepicker').date(this.$input.val());
             }, this));
 
         },
@@ -41,7 +41,7 @@ Automatically shown in inline mode.
            this.$input.val(this.value2html(value));
            //this.$tpl.datetimepicker('update');
            if(value) {
-               this.$tpl.data('DateTimePicker').date(value);
+               this.$tpl.data('datetimepicker').date(value);
            }
        },
 
@@ -50,8 +50,9 @@ Automatically shown in inline mode.
        },
 
        activate: function() {
-            //this.$input.data('DateTimePicker').show();
+            //this.$input.data('datetimepicker').show();
             $.fn.editabletypes.text.prototype.activate.call(this);
+            this.$tpl.datetimepicker('show');
        },
 
        autosubmit: function() {
@@ -63,7 +64,7 @@ Automatically shown in inline mode.
         /**
         @property tpl
         **/
-        tpl:'<div class="input-group date" style="position: relative"><input type="text"/><span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span></div>',
+        tpl:'<div class="input-group date" id="editable${id}" data-target-input="nearest" style="position: relative"><input type="text"/><span class="input-group-addon" data-target="#editable${id}" data-toggle="datetimepicker"><span class="glyphicon glyphicon-calendar"></span></span></div>',
         /**
         @property inputclass
         @default null

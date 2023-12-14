@@ -177,11 +177,13 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
         error: function(msg) {
             var $group = this.$form.find('.control-group'),
                 $block = this.$form.find('.editable-error-block'),
+                $control = this.$form.find('input'),
                 lines;
 
             if(msg === false) {
                 $group.removeClass($.fn.editableform.errorGroupClass);
                 $block.removeClass($.fn.editableform.errorBlockClass).empty().hide(); 
+                $control.removeClass($.fn.editableform.errorControlClass);
             } else {
                 //convert newline to <br> for more pretty error display
                 if(msg) {
@@ -193,6 +195,7 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
                 }
                 $group.addClass($.fn.editableform.errorGroupClass);
                 $block.addClass($.fn.editableform.errorBlockClass).html(msg).show();
+                $control.addClass($.fn.editableform.errorControlClass);
             }
         },
 
@@ -292,7 +295,7 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
                 if(typeof this.options.error === 'function') {
                     msg = this.options.error.call(this.options.scope, xhr, newValue);
                 } else {
-                    msg = typeof xhr === 'string' ? xhr : xhr.responseText || xhr.statusText || 'Unknown error!';
+                    msg = typeof xhr === 'string' ? xhr : xhr.responseJSON || xhr.responseText || xhr.statusText || 'Unknown error!';
                 }
 
                 this.error(msg);
@@ -617,7 +620,7 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
     */      
     $.fn.editableform.template = '<form class="form-inline editableform">'+
     '<div class="control-group">' + 
-    '<div><div class="editable-input"></div><div class="editable-buttons"></div></div>'+
+    '<div style="display: flex"><div class="editable-input"></div><div class="editable-buttons"></div></div>'+
     '<div class="editable-error-block"></div>' + 
     '</div>' + 
     '</form>';
@@ -634,6 +637,9 @@ Editableform is linked with one of input types, e.g. 'text', 'select' etc.
 
     //error class attached to editable-error-block
     $.fn.editableform.errorBlockClass = 'editable-error';
+
+    //error class attached to input
+    $.fn.editableform.errorControlClass = null;
     
     //engine
     $.fn.editableform.engine = 'jquery';
@@ -2337,6 +2343,7 @@ To create your own input you can inherit from this class.
 
     //types
     $.fn.editabletypes = {};
+    var idSequence = 0;
 
     var AbstractInput = function () { };
 
@@ -2355,7 +2362,9 @@ To create your own input you can inherit from this class.
        this method called before render to init $tpl that is inserted in DOM
        */
        prerender: function() {
-           this.$tpl = $(this.options.tpl); //whole tpl as jquery object    
+           var tpl = this.options.tpl;
+           tpl = tpl.replace(/\$\{id\}/g, idSequence++);
+           this.$tpl = $(tpl); //whole tpl as jquery object    
            this.$input = this.$tpl;         //control itself, can be changed in render method
            this.$clear = null;              //clear button
            this.error = null;               //error message, if input cannot be rendered           
@@ -3708,6 +3717,63 @@ $(function(){
 (function ($) {
     "use strict";
 
+    $.fn.select2.amd.define('select2/dataAdapter/CustomData', [
+        'select2/data/array',
+        'select2/utils'
+    ], function (ArrayData, Utils) {
+        function CustomData ($element, options) {
+            CustomData.__super__.constructor.call(this, $element, options);
+            this.options.optionCache = {};
+        }
+        function converterFunc(obj) {
+            obj.id = obj.id || obj.value;
+            obj.text = obj.text || obj.name;
+            return obj;
+        }
+
+        Utils.Extend(CustomData, ArrayData);
+        CustomData.prototype.query = function (params, callback) {
+            var optionCache = this.options.optionCache;
+            $.get(this.options.options.ajax.url, { query: params.term }, function (data) {
+                var items = $.map(data, converterFunc);
+                items.forEach(function(item) {
+                    optionCache[item.id] = item;
+                });
+                callback({
+                    results: items
+                });
+            }, 'json');
+        };
+
+        CustomData.prototype.current = function (callback) {
+            var currentVal = this.$element.val();
+
+            if (!this.$element.prop('multiple')) {
+                currentVal = [currentVal];
+            }
+
+            var optionCache = this.options.optionCache;
+            var cachedItems = [];
+            currentVal.forEach(function(v)
+            {
+                var cachedItem = optionCache[v];
+                if (optionCache[v])
+                {
+                    cachedItems.push(cachedItem);
+                }
+            });
+            if (cachedItems.length === currentVal.length)
+            {
+                callback(cachedItems);
+                return;
+            }
+            $.get(this.options.options.ajax.url, { id: currentVal }, function (data) {
+                callback($.map(data, converterFunc).filter(function(element) { return currentVal.includes(element.id); }));
+            }, 'json');
+        };
+        return CustomData;
+    });
+
     var Constructor = function (options) {
         this.init('select2', options, Constructor.defaults);
 
@@ -3727,18 +3793,15 @@ $(function(){
             //if source is function, call it (once!)
             if ($.isFunction(options.source)) {
                 source = options.source.call(options.scope);
+            } else if (options.sourceType === 'json') {
+                source = JSON.parse(source);
             }
 
             if (typeof source === 'string') {
                 options.select2.ajax = options.select2.ajax || {};
-                //some default ajax params
-                if(!options.select2.ajax.data) {
-                    options.select2.ajax.data = function(term) {return { query:term };};
-                }
-                if(!options.select2.ajax.processResults) {
-                    options.select2.ajax.processResults = function(data) { return {results:data };};
-                }
                 options.select2.ajax.url = source;
+                
+                options.select2.dataAdapter = $.fn.select2.amd.require('select2/dataAdapter/CustomData');
             } else {
                 //check format and convert x-editable format to select2 format (if needed)
                 this.sourceData = this.convertSource(source);
@@ -3773,7 +3836,16 @@ $(function(){
     $.extend(Constructor.prototype, {
         render: function() {
             this.setClass();
-
+            if (this.options.select2.multiple)
+            {
+                this.$input.attr('multiple', 'multiple');
+            } else if (this.options.select2.placeholder) {
+                // for single selects with placeholder
+                // add a blank <option> as the first option
+                var option = new Option('', '', false, false);
+                // Append it to the select
+                this.$input.append(option);
+            }
             //can not apply select2 here as it calls initSelection
             //over input that does not have correct value yet.
             //apply select2 only in value2input
@@ -3782,7 +3854,7 @@ $(function(){
             //when data is loaded via ajax, we need to know when it's done to populate listData
             if(this.isRemote) {
                 //listen to loaded event to populate data
-                this.$input.on('select2-loaded', $.proxy(function(e) {
+                this.$input.on('results:all', $.proxy(function(e) {
                     this.sourceData = e.items.results;
                 }, this));
             }
@@ -3804,10 +3876,12 @@ $(function(){
                 //data = $.fn.editableutils.itemsByValue(value, this.options.select2.tags, this.idFunc);
             } else if(this.sourceData) {
                 data = $.fn.editableutils.itemsByValue(value, this.sourceData, this.idFunc);
-            } else {
+            } else if(this.$input) { // false initially when isRemote
                 data = this.$input.find(':selected').toArray();
                 //can not get list of possible values
                 //(e.g. autotext for select2 with ajax source)
+            } else {
+                return;
             }
 
             //data may be array (when multiple values allowed)
@@ -3832,20 +3906,10 @@ $(function(){
         },
 
         value2input: function(value) {
-            //for remote source just set value, text is updated by initSelection
-            if(!this.$input.data('select2')) {
-                if (this.options.select2.multiple)
-                {
-                    this.$input.attr('multiple', 'multiple');
-                } else if (this.options.select2.placeholder) {
-                    // for single selects with placeholder
-                    // add a blank <option> as the first option
-                    var option = new Option('', '', value == null, value == null);
-                    // Append it to the select
-                    this.$input.append(option);
-                }
 
-                if (value && this.isRemote && !this.options.select2.tags)
+            //for remote source just set value, text is updated by initSelection
+            if (this.$input.data('select2') == null) {
+                if (value != null && this.isRemote && !this.options.select2.tags)
                 {
                     var optionvalues = value;
                     if(!$.isArray(optionvalues))
@@ -3861,16 +3925,12 @@ $(function(){
                     }.bind(this));
                 }
                 this.$input.select2(this.options.select2);
-                if (!this.isRemote)
-                {
-                    this.$input.val(value).trigger('change', true);
-                }
-            } else {
-               //second argument needed to separate initial change from user's click (for autosubmit)
-               this.$input.val(value).trigger('change', true);
+            }
 
-               //Uncaught Error: cannot call val() if initSelection() is not defined
-               //this.$input.select2('val', value);
+            if (!this.isRemote)
+            {
+                //second argument needed to separate initial change from user's click (for autosubmit)
+                this.$input.val(value).trigger('change', true);
             }
 
             // if defined remote source AND no multiple mode AND no user's initSelection provided -->
@@ -3973,7 +4033,7 @@ $(function(){
         select2: {
             //commented due to failing test, running `grunt test3`
             //dropdownParent: '.popover:last',
-            width: '20em',
+            width: '100%',
             dropdownAutoWidth: true,
         },
         /**
@@ -3995,6 +4055,14 @@ $(function(){
         **/
         source: null,
         /**
+        Source type: If source is a string, treat it as a 'url' or 'json' encoded data.
+
+        @property sourceType
+        @type string
+        @default null
+        **/
+        sourceType: 'url',
+        /**
         Separator used to parse values.
 
         @property separator
@@ -4012,7 +4080,6 @@ $(function(){
     });
 
     $.fn.editabletypes.select2 = Constructor;
-
 }(window.jQuery));
 
 /**

@@ -68,7 +68,7 @@ require(["loader", jqurl], function(loader) {
         });        
         
         QUnit.load();
-        QUnit.start();
+        //QUnit.start();
     });
     
     function addTests(config) {

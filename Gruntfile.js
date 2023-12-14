@@ -236,6 +236,9 @@ module.exports = function(grunt) {
       },
       plain: {
           options: {
+            puppeteer: {
+              headless: true
+            },
             urls:[
                   'http://localhost:8000/test/index.html?f=plain&c=popup'+module,
                   'http://localhost:8000/test/index.html?f=plain&c=inline'+module
@@ -327,7 +330,7 @@ module.exports = function(grunt) {
   });
 
   //test task
-  grunt.registerTask('test', ['jshint', 'connect', 'qunit:bootstrap3']);
+  grunt.registerTask('test', ['jshint', 'connect', 'qunit:bootstrap3', 'qunit:plain']);
   grunt.registerTask('test3', ['jshint', 'connect', 'qunit:bootstrap3']);
   grunt.registerTask('test5', ['jshint', 'connect', 'qunit:bootstrap5']);
   grunt.registerTask('testall', [

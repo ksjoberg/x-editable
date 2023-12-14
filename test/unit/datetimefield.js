@@ -17,8 +17,12 @@ define(["jquery", "moment"], function ($, moment) {
     
     function frmt(date, format) {
         //convert to utc
-        //date = moment($.fn.editabletypes.datetime.prototype.toUTC(date)); 
-        return date.format(format);
+        //date = moment($.fn.editabletypes.datetime.prototype.toUTC(date));
+        if (date)
+        {
+            return date.format(format);
+        }
+        return null;
     }
      
     asyncTest("container should contain datetimepicker with value and save new entered date", function () {
@@ -67,7 +71,7 @@ define(["jquery", "moment"], function ($, moment) {
             p.find('.day.active').next().click();
 
             //switch to timepicker
-            p.find('.picker-switch a').click();
+            p.find('.picker-switch a[data-action=togglePicker]').click();
 
             //hours appeared?
             ok(p.find('.timepicker-hour').is(':visible'), 'datetimepicker hours visible');

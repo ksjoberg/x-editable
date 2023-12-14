@@ -10,6 +10,7 @@ To create your own input you can inherit from this class.
 
     //types
     $.fn.editabletypes = {};
+    var idSequence = 0;
 
     var AbstractInput = function () { };
 
@@ -28,7 +29,9 @@ To create your own input you can inherit from this class.
        this method called before render to init $tpl that is inserted in DOM
        */
        prerender: function() {
-           this.$tpl = $(this.options.tpl); //whole tpl as jquery object    
+           var tpl = this.options.tpl;
+           tpl = tpl.replace(/\$\{id\}/g, idSequence++);
+           this.$tpl = $(tpl); //whole tpl as jquery object    
            this.$input = this.$tpl;         //control itself, can be changed in render method
            this.$clear = null;              //clear button
            this.error = null;               //error message, if input cannot be rendered           

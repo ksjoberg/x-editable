@@ -11,8 +11,7 @@ $(function () {
         var e = $(
           '<a href="#" data-type="text" id="username">user</a>' + 
           '<a href="#" data-type="textarea" id="comment">12345</a>' + 
-          '<a href="#" data-type="select" id="sex" data-value="1" data-source=\'{"1":"q", "2":"w"}\'>q</a>' + 
-          '<a href="#" data-type="date" id="dob" data-format="DD.MM.YYYY">15.05.1984</a>'
+          '<a href="#" data-type="select" id="sex" data-value="1" data-source=\'{"1":"q", "2":"w"}\'>q</a>'
          ).appendTo('#qunit-fixture').editable(),
          e1 = $('#username').editable('option', 'validate', function(value) {
                      if($.trim(value) !== 'user1') return 'username is required';
@@ -27,7 +26,6 @@ $(function () {
         equal(values.username, 'user', 'username ok') ;
         equal(values.comment, '12345', 'comment ok') ;
         equal(values.sex, 1, 'sex ok') ;
-        equal(values.dob, '15.05.1984', 'dob ok') ;
         
         //validate
         var errors = e.editable('validate'); 

@@ -18,7 +18,7 @@
   "husky": {
     "hooks": {
       "pre-commit": "grunt jshint",
-      "pre-push": "grunt jshint test3"
+      "pre-push": "grunt jshint test"
     }
   },
   "devDependencies": {

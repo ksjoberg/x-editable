@@ -137,20 +137,20 @@ define(function () {
                     deps: ['require', 
                     'bootstrap/js/bootstrap',
                     'inputs/abstract', 
-                    'inputs/datetime/bootstrap-datetimepicker/js/bootstrap-datetimepicker',
+                    'inputs/datetime/tempusdominus/js/tempusdominus-bootstrap-4',
                     'moment'],
                     init: function(require) {
-                        loadCss(require.toUrl("../datetime/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css"));
+                        loadCss(require.toUrl("../datetime/tempusdominus/css/tempusdominus-bootstrap-4.css"));
                     }
                 },
                 'inputs/datetime/datetime': {
                     deps: ['require', 
                     'bootstrap/js/bootstrap',
                     'inputs/abstract', 
-                    'inputs/datetime/bootstrap-datetimepicker/js/bootstrap-datetimepicker',
+                    'inputs/datetime/tempusdominus/js/tempusdominus-bootstrap-4',
                     'moment'],
                     init: function(require) {
-                        loadCss(require.toUrl("./bootstrap-datetimepicker/css/bootstrap-datetimepicker.css")); 
+                        loadCss(require.toUrl("./tempusdominus/css/tempusdominus-bootstrap-4.css")); 
                     }
                 },
 
